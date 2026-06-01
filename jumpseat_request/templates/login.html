@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<form method="POST">
+    {% for field in login_form %}
+        {% if field.type != 'HiddenField' %}
+        {{ field.label }}
+        {{ field }}
+        {% endif %}
+    {% endfor %}
+</form>
+{% endblock %}

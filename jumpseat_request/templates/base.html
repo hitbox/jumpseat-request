@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+    <head>{% block head %}
+        <meta charset="utf-8">
+        <title>{% block title %}{{ config.JUMPSEAT_REQUEST_TITLE }}{% endblock title %}</title>
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename="favicon.png") }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
+    {% endblock head %}</head>
+    <body>{% block body %}
+        <nav class="noprint">
+        </nav>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <aside class="flash noprint">
+            <ul id="flashes">
+                {% for category, message in messages %}
+                <li class="flash {{ category or 'info'  }}">
+                    <div class="message {{category}}">{% for line in message.splitlines() %}
+                        <div>{{ line|safe }}</div>{% endfor %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </aside>
+        {% endif %}
+        {% endwith %}
+        <main>{% block main %}
+            {% block header %}{% endblock header %}
+            {% block content %}{% endblock content %}
+            {% block footer %}{% endblock footer %}
+        {% endblock %}</main>
+    {% endblock %}</body>
+</html>

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Jump seat Requests</h1>
+    {% if not jumpseat_requests %}
+        <p>No jumpseat requests</p>
+    {% else %}
+    {% for request in jumpseat_requests %}<div>
+        <div>{{ request.employee }}</div>
+    </div>{% endfor %}
+    {% endif %}
+{% endblock %}

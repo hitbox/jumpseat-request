@@ -1,0 +1,65 @@
+/* https://css-tricks.com/inheriting-box-sizing-probably-slightly-better-best-practice/ */
+/* use inheritance to avoid breaking things that are not using border-box */
+html {
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+:root {
+    --bg: white;
+    --text: black;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #121212;
+        --text: #eaeaea;
+    }
+    body {
+        background: #121212;
+        color: white;
+    }
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    font-family: sans-serif;
+    margin: 0;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+aside.flash {
+    margin: 1px;
+    display: flex;
+    align-items: center;
+    align-content: center;
+}
+
+.message {
+    /* style all flash messages */
+    color: white;
+    padding: 4px 8px;
+}
+
+.message.info {
+    background: deepskyblue;
+}
+
+.message.warning {
+    background: gold;
+}
+
+.message.danger {
+    background: crimson;
+}
