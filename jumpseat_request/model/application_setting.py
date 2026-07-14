@@ -1,5 +1,7 @@
 import uuid
 
+from operator import attrgetter
+
 from flask import render_template
 from flask import request
 from flask import url_for
@@ -15,6 +17,24 @@ from jumpseat_request.extension import timezone
 from .application_setting_enum import ApplicationSettingEnum
 from .mixin import ModelMixin
 from .user import User
+
+def get_base_settings_form():
+    class SettingsForm(FlaskForm):
+        """
+        Application settings initialization form
+        """
+        update = SubmitField()
+
+        def populate_obj(self, obj):
+            # ignore object and update database rows
+            for member in ApplicationSettingEnum:
+                field = getattr(self, member.name.lower(), None)
+                if field:
+                    setting = cls(name=member.name, value=field.data)
+                    db.session.add(setting)
+
+    return SettingsForm
+
 
 class ApplicationSetting(db.Model, ModelMixin):
     """
@@ -48,39 +68,31 @@ class ApplicationSetting(db.Model, ModelMixin):
         return missing
 
     @classmethod
+    def as_data(cls):
+        return {obj.name: obj.value for obj in db.session.scalars(db.select(cls))}
+
+    @classmethod
     def get_settings_form(cls):
-        class SettingsForm(FlaskForm):
-            """
-            Application settings initialization form
-            """
-            update = SubmitField()
+        SettingsForm = get_base_settings_form()
+        # Add fields
+        members = sorted(ApplicationSettingEnum, key=attrgetter('name'))
+        for member in members:
+            field = member.form_field
+            setattr(SettingsForm, member.name.lower(), field)
 
-            def save(self):
-                for member in ApplicationSettingEnum:
-                    field = getattr(self, member.name.lower(), None)
-                    if field:
-                        setting = cls(name=member.name, value=field.data)
-                        db.session.add(setting)
+            # Update values
+            #field = getattr(SettingsForm, member.name.lower())
+            ident = {'name': member.name}
+            setting = db.session.get(cls, ident)
+            field.data = setting.value
 
-        for member in ApplicationSettingEnum:
-            setattr(SettingsForm, member.name, member.form_field)
+        return SettingsForm
 
     @classmethod
     def missing_settings_form(cls):
         missing = cls.missing_settings()
         if missing:
-            class SettingsForm(FlaskForm):
-                """
-                Application settings initialization form
-                """
-                update = SubmitField()
-
-                def save(self):
-                    for member in ApplicationSettingEnum:
-                        field = getattr(self, member.name.lower(), None)
-                        if field:
-                            setting = cls(name=member.name, value=field.data)
-                            db.session.add(setting)
+            SettingsForm = get_base_settings_form()
 
             for name, field in missing:
                 setattr(SettingsForm, name.lower(), field)

@@ -70,7 +70,10 @@ def seed_db():
 
 def make_edit_endpoint(name, pkname='id'):
     def endpoint(obj):
-        return url_for(f'admin.{name}_edit', id=getattr(obj, pkname))
+        kwargs = {}
+        ident = getattr(obj, pkname)
+        kwargs[pkname] = ident
+        return url_for(f'admin.{name}_edit', **kwargs)
     return endpoint
 
 def make_pagination_getter(model_class):
@@ -120,18 +123,20 @@ def make_views_for_models(specs):
             edit_endpoint = make_edit_endpoint(table_name, pkname=spec.get('pkname'))
             list_kwargs.setdefault('edit_endpoint', edit_endpoint)
             after_endpoint = spec.get('edit_after_endpoint', f'admin.{table_name}_list')
-            init_kwargs = {
+            view_kwargs = {
                 'template': spec.get('edit_template', 'admin/edit_form.html'),
                 'model_class': model_class,
                 'form_class': edit_form,
                 'after_endpoint': after_endpoint,
             }
+            view_kwargs['kwargs_for_form'] = spec.get('edit_kwargs_for_form')
+            rule = spec.get('edit_rule', f'/{table_name}-edit/<id>')
             admin_bp.add_url_rule(
-                f'/{table_name}-edit/<id>',
+                rule,
                 view_func = login_and_password_ok(
                     EditObjectView.as_view(
                         f'{table_name}_edit',
-                        **init_kwargs
+                        **view_kwargs
                     ),
                 ),
             )

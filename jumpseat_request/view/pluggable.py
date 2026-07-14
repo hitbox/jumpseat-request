@@ -1,3 +1,5 @@
+import inspect
+
 from flask import abort
 from flask import flash
 from flask import redirect
@@ -98,11 +100,13 @@ class EditObjectView(View):
         template,
         model_class,
         form_class,
+        kwargs_for_form = None,
         after_endpoint = None,
     ):
         self.template = template
         self.model_class = model_class
         self.form_class = form_class
+        self.kwargs_for_form = kwargs_for_form
         self.after_endpoint = after_endpoint
 
     def dispatch_request(self, **kwargs):
@@ -112,13 +116,18 @@ class EditObjectView(View):
             abort(404, description=f'Instance not found {kwargs}')
 
         form_class = self.form_class
-        if callable(form_class):
+        if inspect.isclass(form_class):
+            pass
+        elif callable(form_class):
+            # Not a class but is callable.
             form_class = form_class()
 
         if request.method == 'GET':
-            # Passing the formdata keyword in, when it's empty, breaks
-            # checkboxes rendering.
-            form = form_class(obj=instance)
+            if self.kwargs_for_form:
+                kwargs = self.kwargs_for_form()
+            else:
+                kwargs = {'obj': instance}
+            form = form_class(**kwargs)
 
         elif request.method == 'POST':
             form = form_class(formdata=request.form, obj=instance)

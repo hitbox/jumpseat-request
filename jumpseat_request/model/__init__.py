@@ -3,6 +3,7 @@ from .announcement import Announcement
 from .announcement import AnnouncementLevel
 from .announcement import AnnouncementLevelType
 from .application_setting import ApplicationSetting
+from .application_setting import ApplicationSettingEnum
 from .email_job import EmailJob
 from .email_job import EmailJobRecipient
 from .employee import Employee

@@ -14,6 +14,7 @@ from jumpseat_request.authenticate import login_and_password_ok
 from jumpseat_request.extension import db
 from jumpseat_request.extension import login_manager
 from jumpseat_request.form import EditAnnouncementForm
+from jumpseat_request.form import EditApplicationSettingForm
 from jumpseat_request.form import EditEmployeeForm
 from jumpseat_request.form import EditJumpseatRequestAdminForm
 from jumpseat_request.form import EditJumpseatRequestForm
@@ -230,7 +231,9 @@ admin_specs_for_views = [
     },
     {
         'model_class': ApplicationSetting,
-        'edit_form': ApplicationSetting.get_settings_form,
+        'pagination_getter': lambda: db.paginate(db.select(ApplicationSetting).order_by(ApplicationSetting.name)),
+        'edit_rule': '/application-setting-edit/<name>',
+        'edit_form': EditApplicationSettingForm,
         'pkname': 'name',
         'html_table': Table([
             Column(
@@ -242,4 +245,3 @@ admin_specs_for_views = [
         ]),
     },
 ]
-

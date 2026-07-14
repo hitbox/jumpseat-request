@@ -2,6 +2,7 @@ from .airline import EditAirlineForm
 from .airline import NewAirlineForm
 from .announcement import EditAnnouncementForm
 from .announcement import NewAnnouncementForm
+from .application_setting import EditApplicationSettingForm
 from .employee import EditEmployeeForm
 from .employee import EmployeeSubForm
 from .employee import NewEmployeeForm

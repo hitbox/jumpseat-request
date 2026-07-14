@@ -52,13 +52,13 @@ ApplicationSettingEnum.DENY_COMMENT.form_field = StringField(
 
 
 ApplicationSettingEnum.TOKEN_MAX_AGE.form_field = IntegerField(
-    'Token verification token age seconds',
+    'Token age seconds',
     default = 60,
     validators = [
         DataRequired()
     ],
     render_kw = {
         'title':
-            'Maximum age in seconds for email verification token and other links sent to email like registering a guest account.',
+            'Maximum age in seconds for email verification token and other time-sensitive links sent to email like registering a guest account.',
     },
 )
