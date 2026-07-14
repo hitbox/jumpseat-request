@@ -14,7 +14,6 @@ from jumpseat_request.authenticate import login_and_password_ok
 from jumpseat_request.extension import db
 from jumpseat_request.extension import login_manager
 from jumpseat_request.form import EditAnnouncementForm
-from jumpseat_request.form import EditApplicationSettingForm
 from jumpseat_request.form import EditEmployeeForm
 from jumpseat_request.form import EditJumpseatRequestAdminForm
 from jumpseat_request.form import EditJumpseatRequestForm
@@ -217,23 +216,27 @@ admin_specs_for_views = [
     },
     {
         'model_class': JumpseatRequestNotificationRuleAssoc,
-        'html_table': Table([
-            Column(
-                attrname = 'jumpseat_request',
-            ),
-            Column(
-                attrname = 'notification_rule',
-            ),
-            Column(
-                attrname = 'message',
-            ),
-        ]),
+        'html_table': Table(
+            description = JumpseatRequestNotificationRuleAssoc.__doc__,
+            columns = [
+                Column(
+                    attrname = 'jumpseat_request',
+                ),
+                Column(
+                    attrname = 'notification_rule',
+                ),
+                Column(
+                    attrname = 'message',
+                ),
+            ],
+        ),
     },
     {
         'model_class': ApplicationSetting,
-        'pagination_getter': lambda: db.paginate(db.select(ApplicationSetting).order_by(ApplicationSetting.name)),
-        'edit_rule': '/application-setting-edit/<name>',
-        'edit_form': EditApplicationSettingForm,
+        'edit_form': ApplicationSetting.get_settings_form,
+        'edit_rule': '/application-setting/<name>',
+        # special way to populate these forms:
+        'edit_kwargs_for_form': lambda: { 'data': ApplicationSetting.as_data() },
         'pkname': 'name',
         'html_table': Table([
             Column(
@@ -245,3 +248,4 @@ admin_specs_for_views = [
         ]),
     },
 ]
+

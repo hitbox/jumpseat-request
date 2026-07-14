@@ -98,3 +98,7 @@ class ApplicationSetting(db.Model, ModelMixin):
                 setattr(SettingsForm, name.lower(), field)
 
             return SettingsForm
+
+    @classmethod
+    def name_for_template(cls):
+        return 'Application Settings'

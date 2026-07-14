@@ -52,7 +52,7 @@ ApplicationSettingEnum.DENY_COMMENT.form_field = StringField(
 
 
 ApplicationSettingEnum.TOKEN_MAX_AGE.form_field = IntegerField(
-    'Token age seconds',
+    'Max token age seconds',
     default = 60,
     validators = [
         DataRequired()

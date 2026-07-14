@@ -130,7 +130,8 @@ def make_views_for_models(specs):
                 'after_endpoint': after_endpoint,
             }
             view_kwargs['kwargs_for_form'] = spec.get('edit_kwargs_for_form')
-            rule = spec.get('edit_rule', f'/{table_name}-edit/<id>')
+            default_rule = f'/{table_name}-edit/<id>'
+            rule = spec.get('edit_rule', default_rule)
             admin_bp.add_url_rule(
                 rule,
                 view_func = login_and_password_ok(
