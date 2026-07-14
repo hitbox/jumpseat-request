@@ -1,0 +1,9 @@
+Jump Seat Request Resolved
+
+{{ jumpseat_request.flight_number }}
+{{ jumpseat_request.flight_date }}
+{{ jumpseat_request.status_html() }}
+
+Decision
+{{ jumpseat_request.decision_by.email }}
+{{ jumpseat_request.status_html() }}

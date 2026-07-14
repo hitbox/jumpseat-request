@@ -2,48 +2,86 @@
 /* use inheritance to avoid breaking things that are not using border-box */
 html {
     box-sizing: border-box;
+    /* this just seems to let the browsers handle all coloring for light and dark */
+    color-scheme: dark light;
+}
+
+:root {
+    --hover-bg: color-mix(in srgb, currentColor 20%, transparent);
+    --danger-color: crimson;
+    --text: currentColor;
+    --denied-background-color: var(--pico-del-color);
+    --approved-background-color: ForestGreen;
+}
+
+body {
+    font-family: sans-serif;
 }
 
 *, *:before, *:after {
     box-sizing: inherit;
 }
 
-:root {
-    --bg: white;
-    --text: black;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #121212;
-        --text: #eaeaea;
-    }
-    body {
-        background: #121212;
-        color: white;
-    }
-}
-
-body {
-    background: var(--bg);
-    color: var(--text);
+.center {
     display: flex;
-    flex-direction: column;
-    font-family: sans-serif;
-    margin: 0;
-}
-
-ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-}
-
-aside.flash {
-    margin: 1px;
-    display: flex;
+    justify-content: center;
     align-items: center;
-    align-content: center;
+}
+
+main {
+    margin-top: 1rem;
+}
+
+/*
+table {
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid var(--text);
+}
+
+th, td {
+    padding: 4px 8px;
+}
+*/
+
+ul.bare {
+    list-style-type: circle;
+}
+
+nav.topnav {
+    display: flex;
+    justify-content: center;
+}
+
+nav.topnav ul {
+    max-width: 500px;
+    display: flex;
+    justify-content: space-between;
+}
+
+nav.topnav ul * {
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+a {
+    color: var(--link-color);
+    cursor: pointer;
+}
+
+a:hover {
+    color: var(--link-hover);
+    text-decoration: underline;
+}
+
+dl.table {
+    display: grid;
+    grid-template-columns: auto auto;
+}
+
+li.flash {
 }
 
 .message {
@@ -52,14 +90,138 @@ aside.flash {
     padding: 4px 8px;
 }
 
-.message.info {
+.request-status {
+    padding: 4px 8px;
+    color: White;
+}
+
+.request-status.approved {
+    background-color: var(--approved-background-color);
+}
+
+.request-status.pending {
+    background-color: var(--pico-muted-color);
+}
+
+.request-status.denied {
+    background-color: var(--denied-background-color);
+}
+
+/* minute the "message" class to allow color use elsewhere */
+.info {
     background: deepskyblue;
 }
 
-.message.warning {
+.warning {
     background: gold;
+    color: indigo;
 }
 
-.message.danger {
-    background: crimson;
+.danger {
+    background-color: var(--danger-color);
 }
+
+.success {
+    background-color: ForestGreen;
+}
+
+.data {
+    font-family: monospace;
+    font-size: 1rem;
+}
+
+ul li {
+    /* manually delete list-style from pico.css */
+    list-style-type: none;
+}
+
+/*
+input, select {
+    height: 2rem;
+    min-width: 12rem;
+}
+
+input[type=checkbox] {
+    min-height: 2rem;
+}
+*/
+
+input[type=checkbox].danger {
+    accent-color: var(--danger-color);
+}
+
+/*
+form {
+    max-width: 720px;
+}
+*/
+
+form.action {
+    /* little forms inside a <td> */
+    /* make the inputs line up vertically */
+    /*
+    display: flex;
+    align-items: center;
+    width: fit-content;
+    */
+}
+
+.field-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+}
+
+[data-href] {
+    /* data-href attribute-elements look clickable */
+    cursor: pointer;
+}
+
+tr[data-href]:hover td {
+    background-color: var(--pico-primary-hover-background) !important;
+}
+
+.value {
+    display: inline-block;
+}
+
+.bool {
+    color: currentColor;
+}
+
+.bool.yes {
+    background-color: ForestGreen;
+}
+
+.bool.no {
+    background-color: orange;
+}
+
+.contacts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 4px 8px;
+}
+
+.contacts * {
+    padding: 2px 4px;
+    border: 1px solid currentColor;
+}
+
+pre {
+    white-space: pre-wrap;
+}
+
+.contact-value {
+    white-space: nowrap;
+}
+
+.tab.current {
+    background: ForestGreen;
+    color: white;
+}
+
+button.dynamic {
+    /* Like the remove button on a frontend dynamic list */
+    max-width: 5rem;
+}
+

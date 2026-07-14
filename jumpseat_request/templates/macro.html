@@ -1,0 +1,280 @@
+{% set special_types = ('CSRFTokenField',) %}
+{% set button_types = ('SubmitField') %}
+
+
+{% macro render_form(form) %}
+    {{ form.hidden_tag() }}
+    {% set fields = form | rejectattr('type', 'in', ('HiddenField', 'SubmitField', 'CSRFTokenField')) %}
+    {% if fields %}
+    <fieldset>{% for field in fields %}
+        {{ render_field(field) }}
+    {% endfor %}</fieldset>
+    {% endif %}
+    {% set buttons = form | selectattr('type', 'in', ('SubmitField', )) %}
+    {% if buttons %}
+    <fieldset class="grid">
+        {% for field in buttons %}
+            {% if field.type in button_types %}
+                {{ field }}
+            {% endif %}
+        {% endfor %}
+    </fieldset>
+    {% endif %}
+{% endmacro %}
+
+
+{% macro render_pagination(pagination, endpoint=none) %}
+    {% if pagination.pages > 1 %}
+    <nav class="pagination">
+      {%- set ep = endpoint or request.endpoint %}
+
+      <a class="page-link{% if not pagination.has_prev %} disabled{% endif %}"
+         href="{{ url_for(ep, page=pagination.prev_num, **request.args) if pagination.has_prev else '#' }}"
+         aria-disabled="{{ 'true' if not pagination.has_prev }}">&#8592;</a>
+
+      {%- for p in pagination.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+        {% if p is none %}
+          <span class="page-ellipsis">…</span>
+        {% elif p == pagination.page %}
+          <span class="page-link page-link--current" aria-current="page">{{ p }}</span>
+        {% else %}
+          <a class="page-link" href="{{ url_for(ep, page=p, **request.args) }}">{{ p }}</a>
+        {% endif %}
+      {%- endfor %}
+
+      <a class="page-link{% if not pagination.has_next %} disabled{% endif %}"
+         href="{{ url_for(ep, page=pagination.next_num, **request.args) if pagination.has_next else '#' }}"
+         aria-disabled="{{ 'true' if not pagination.has_next }}">&#8594;</a>
+    </nav>
+    {% endif %}
+{% endmacro %}
+
+
+{% macro render_link_with_current(url, text, current_when=none) %}
+    {% if current_when is defined and current_when %}
+        {% set is_current = request.endpoint in current_when %}
+    {% else %}
+        {% set is_current = false %}
+    {% endif %}
+    <a href="{{ url }}" role="button" class="tab {% if is_current %}current{% endif %}">{{ text }}</a>
+{% endmacro %}
+
+
+{% macro render_css() %}
+    {# render styles inline for emails #}
+/* https://css-tricks.com/inheriting-box-sizing-probably-slightly-better-best-practice/ */
+/* use inheritance to avoid breaking things that are not using border-box */
+html {
+    box-sizing: border-box;
+    /* this just seems to let the browsers handle all coloring for light and dark */
+    color-scheme: dark light;
+}
+
+body {
+    font-family: sans-serif;
+}
+
+:root {
+    --hover-bg: color-mix(in srgb, currentColor 20%, transparent);
+    --danger-color: crimson;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+.center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+main {
+    margin-top: 1rem;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid var(--text);
+}
+
+th, td {
+    padding: 4px 8px;
+}
+
+nav.topnav {
+    display: flex;
+    justify-content: center;
+}
+
+nav.topnav ul {
+    max-width: 500px;
+    display: flex;
+    justify-content: space-between;
+}
+
+nav.topnav ul * {
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+a {
+    color: var(--link-color);
+    cursor: pointer;
+}
+
+a:hover {
+    color: var(--link-hover);
+    text-decoration: underline;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    font-family: sans-serif;
+    margin: 0;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+aside.flash {
+    display: flex;
+    justify-content: center;
+}
+
+li.flash {
+    min-width: 500px;
+}
+
+.message {
+    /* style all flash messages */
+    color: white;
+    padding: 4px 8px;
+}
+
+.request-status {
+    padding: 4px 8px;
+}
+
+/* minute the "message" class to allow color use elsewhere */
+.info {
+    background: deepskyblue;
+}
+
+.warning {
+    background: gold;
+}
+
+.danger {
+    background: var(--danger-color);
+}
+
+.success {
+    background: seagreen;
+}
+
+.data {
+    font-family: monospace;
+    font-size: 1rem;
+}
+
+input, select {
+    height: 2rem;
+    min-width: 12rem;
+}
+
+input[type=checkbox].danger {
+    accent-color: var(--danger-color);
+}
+
+form {
+    max-width: 720px;
+}
+
+form.action {
+    /* little forms inside a <td> */
+    width: fit-content;
+}
+
+form.action * {
+    width: fit-content;
+    min-width: initial;
+}
+
+form .buttons {
+    max-width: 90%;
+    margin-top: 20px;
+    display: flex;
+    justify-content: end;
+}
+
+form .buttons * {
+    min-width: 200px;
+}
+
+.fields {
+    display: grid;
+    grid-template-columns: auto auto 2fr;
+    column-gap: 6px;
+    row-gap: 10px;
+    align-items: center;
+}
+
+.fields .header {
+    /* subform or field list header spans all the columns */
+    grid-column: 1 / -1;
+}
+
+[data-href] {
+    /* data-href attribute-elements look clickable */
+    cursor: pointer;
+}
+
+[data-href]:hover {
+    background: var(--hover-bg);
+}
+
+.value {
+    display: inline-block;
+}
+
+.bool {
+    color: currentColor;
+}
+
+.bool.yes {
+    background-color: darkgreen;
+}
+
+.bool.no {
+    background-color: orange;
+}
+
+.contacts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 4px 8px;
+}
+
+.contacts * {
+    padding: 2px 4px;
+    border: 1px solid currentColor;
+}
+
+pre {
+    white-space: pre-wrap;
+}
+
+.contact-value {
+    white-space: nowrap;
+}
+{% endmacro %}

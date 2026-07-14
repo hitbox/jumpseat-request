@@ -1,0 +1,14 @@
+{% extends "admin/base.html" %}
+
+
+{% block content %}
+    {{ super() }}
+    {% if title is defined %}
+        <h3>{{ title }}</h3>
+    {% endif %}
+    <nav>
+        <ul>{% for item in items %}
+            <li>{{ item }}</li>{% endfor %}
+        </ul>
+    </nav>
+{% endblock %}

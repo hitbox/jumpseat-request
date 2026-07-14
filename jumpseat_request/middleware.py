@@ -24,9 +24,7 @@ class PrefixMiddleware:
         path = environ.get("PATH_INFO", "")
         prefix = self.prefix
 
-        # Match either:
-        #   /app
-        #   /app/...
+        # Match prefix
         if not (path == prefix or path.startswith(prefix + "/")):
             response = Response(
                 "URL does not belong to the app.",
@@ -36,7 +34,7 @@ class PrefixMiddleware:
             return response(environ, start_response)
 
         # Update WSGI routing variables
-        environ["SCRIPT_NAME"] = environ.get("SCRIPT_NAME", "") + prefix
+        environ["SCRIPT_NAME"] = prefix
 
         new_path = path[len(prefix):]
         environ["PATH_INFO"] = new_path if new_path else "/"

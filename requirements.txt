@@ -1,8 +1,13 @@
 argon2-cffi
+blinker
 flask
 flask-login
 flask-sqlalchemy
+flask-wtf
+humanize
+marshmallow
 psycopg
+pytest-flask
 sqlalchemy
 wtforms
 wtforms-sqlalchemy

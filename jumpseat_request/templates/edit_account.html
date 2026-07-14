@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+
+{% from "macro.html" import render_form %}
+
+
+{% block content %}
+<div class="center">
+    <div>
+        <h3>Edit Account</h3>
+        <form method="POST">
+            {{ render_form(form) }}
+        </form>
+    </div>
+</div>
+{% endblock %}

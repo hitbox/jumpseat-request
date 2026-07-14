@@ -1,28 +1,135 @@
+from flask import abort
+from flask import flash
+from flask import redirect
 from flask import render_template
 from flask import request
+from flask import url_for
 from flask.views import View
+from markupsafe import Markup
 
+from jumpseat_request.authenticate import login_and_password_ok
 from jumpseat_request.extension import db
 
-class TableEditor(View):
+from htmlkit.lists import unordered_list
+
+class ListView(View):
+    """
+    Paginated list of objects inside a table.
+    """
 
     methods = ['GET', 'POST']
 
-    def __init__(self, template, model_class, pagination_getter, table):
+    def __init__(
+        self,
+        template,
+        model_class,
+        pagination_getter,
+        table,
+        new_endpoint=None,
+        edit_endpoint=None,
+        form_class = None,
+        note = None,
+    ):
         self.template = template
         self.model_class = model_class
         self.pagination_getter = pagination_getter
         self.table = table
-
-    @classmethod
-    def from_model(cls, model):
-        pagination_getter = lambda: db.paginate(db.select(model))
-        return 
+        self.new_endpoint = new_endpoint
+        if edit_endpoint and not callable(edit_endpoint):
+            raise ValueError(f'edit_endpoint {edit_endpoint} must be callable.')
+        self.edit_endpoint = edit_endpoint
+        self.note = note
 
     def dispatch_request(self):
         context = {
-            'objects': self.pagination_getter(self.model_class),
+            'pagination': self.pagination_getter(),
+            'pagination_doc': self.pagination_getter.__doc__,
             'table': self.table,
             'model_class': self.model_class,
+            'new_endpoint': self.new_endpoint,
+            'edit_endpoint': self.edit_endpoint,
+            'note': self.note,
+        }
+        return render_template(self.template, **context)
+
+
+class NewObjectView(View):
+
+    methods = ['GET', 'POST']
+
+    def __init__(
+        self,
+        template,
+        model_class,
+        form_class,
+        after_endpoint = None,
+    ):
+        self.template = template
+        self.model_class = model_class
+        self.form_class = form_class
+        self.after_endpoint = after_endpoint
+
+    def dispatch_request(self):
+        form = self.form_class(request.form)
+
+        if form.validate_on_submit():
+            instance = self.model_class()
+            db.session.add(instance)
+            form.populate_obj(instance)
+            db.session.commit()
+            flash(f'New {self.model_class.__tablename__} created', 'success')
+            if self.after_endpoint:
+                next_url = url_for(self.after_endpoint)
+                return redirect(next_url)
+
+        context = {
+            'model_class': self.model_class,
+            'form': form,
+        }
+        return render_template(self.template, **context)
+
+
+class EditObjectView(View):
+
+    methods = ['GET', 'POST']
+
+    def __init__(
+        self,
+        template,
+        model_class,
+        form_class,
+        after_endpoint = None,
+    ):
+        self.template = template
+        self.model_class = model_class
+        self.form_class = form_class
+        self.after_endpoint = after_endpoint
+
+    def dispatch_request(self, **kwargs):
+        instance = db.session.get(self.model_class, kwargs)
+
+        if instance is None:
+            abort(404, description=f'Instance not found {kwargs}')
+
+        if request.method == 'GET':
+            # Passing the formdata keyword in, when it's empty, breaks
+            # checkboxes rendering.
+            form = self.form_class(obj=instance)
+
+        elif request.method == 'POST':
+            form = self.form_class(formdata=request.form, obj=instance)
+
+            if form.validate():
+                form.populate_obj(instance)
+                db.session.commit()
+                flash(f'{self.model_class.__tablename__} updated', 'success')
+                if self.after_endpoint:
+                    next_url = url_for(self.after_endpoint)
+                    return redirect(next_url)
+
+        context = {
+            'model_class': self.model_class,
+            'form_class': self.form_class,
+            'form': form,
         }
         return render_template(self.template, **context)

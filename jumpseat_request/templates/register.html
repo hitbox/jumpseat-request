@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% from "macro.html" import render_form %}
+
+
+{% block content %}
+<div class="center">
+    <div>
+        <h3>Register New User{% if guest is defined %} from guest {{ guest.id }}{% endif %}</h3>
+        <form method="POST">
+            {{ render_form(register_form) }}
+        </form>
+        <p>Email will be sent an activation code and link.</p>
+    </div>
+</div>
+{% endblock %}

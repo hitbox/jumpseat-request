@@ -1,0 +1,34 @@
+<article>
+    <header>
+        <strong>Request Created</strong>
+        <div>{{ jumpseat_request.created_at_formatted }}</div>
+        <h3>Flight Request</h3>
+        <strong title="flight number">{{ jumpseat_request.flight_number }}</strong>
+        <strong title="flight Z date">{{ jumpseat_request.flight_date|format_date_as_configured }}</strong>
+    </header>
+    <div>
+        <strong>Status</strong>
+        <div>{{ jumpseat_request.status_html() }}</div>
+    </div>
+    <article>
+        <h3>Employee Info</h3>
+        <strong>Airline</strong>
+        <div>{{ jumpseat_request.employee_airline[config.JUMPSEAT_REQUEST_SHOW_AIRLINE_CODE] }}</div>
+        <strong>Employee #</strong>
+        <div>{{ jumpseat_request.employee_number }}</div>
+        {% if jumpseat_request.employee_name %}
+            <strong>Name</strong>
+            <div>{{ jumpseat_request.employee_name }}</div>
+        {% endif %}
+        <strong>Email</strong>
+        <div>{{ jumpseat_request.employee_email_address }}</div>
+        {% if jumpseat_request.phone %}
+        <strong>Email</strong>
+        <div>{{ jumpseat_request.employee_phone }}</div>
+        {% endif %}
+    </article>
+    {% if jumpseat_request.reason %}<div>
+            <strong>Reason</strong>
+            <div>{{ jumpseat_request.reason }}</div>
+</div>{% endif %}
+</article>

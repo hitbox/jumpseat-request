@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+
+{% from "macro.html" import render_form %}
+{% from "macro.html" import render_pagination %}
+
+
+{% macro render_jumpseat_action(jumpseat_request) %}
+    <article>
+        <header>
+            <strong>{{ jumpseat_request.flight_number }}</strong>
+            <strong>{{ jumpseat_request.flight_date|format_date_as_configured }}</strong>
+        </header>
+        <div role="container">
+            <div>
+                <strong>Status</strong>
+                <div>{{ jumpseat_request.status_html() }}</div>
+                <strong>Created</strong>
+                <div>{{ jumpseat_request.created_at_formatted }}</div>
+            </div>
+            <form class="action" method="POST" action="{{ url_for(request.endpoint, request_id=jumpseat_request.id) }}">
+                {% set form = forms[jumpseat_request.id|string] %}
+                {{ form.hidden_tag() }}
+                {% if form.errors %}<pre>{{ form.erros }}</pre>{% endif %}
+                <fieldset>
+                    {{ render_field(form.reason) }}
+                    <div role="group">
+                        {{ form.approve }}{{ form.deny }}
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </article>
+
+{% endmacro %}
+
+
+{% block content %}
+    <h3>Approve/deny jump seat requests</h3>
+    {% if pagination.total == 0 %}
+        <p>No requests found.</p>
+    {% else %}
+        <small>Requests in descending order of creation</small>
+        {% for jumpseat_request in pagination %}
+            {{ render_jumpseat_action(jumpseat_request) }}
+        {% endfor %}
+        {{ render_pagination(pagination, endpoint=request.endpoint) }}
+    {% endif %}
+
+</div>
+{% endblock %}

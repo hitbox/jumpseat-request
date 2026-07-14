@@ -1,0 +1,41 @@
+{% macro render_subfield_and_button(subfield) %}
+    {{ subfield }}
+    <button role="button" type="button" class="secondary outline" onclick="removeFieldListRow(event)">Remove</button>
+{% endmacro %}
+
+
+<div class="fieldlist">
+    {% if field.label %}
+        <label>{{ field.label.text }}</label>
+    {% endif %}
+
+    {# normal render inputs from backend #}
+    <div class="fieldlist-items group">
+        {% for subform in field %}
+            <div role="group">
+            {% for subfield in subform %}
+                {{ render_subfield_and_button(subfield) }}
+            {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+    {# template for dynamic list of inputs #}
+    <template class="fieldlist-prototype">
+        {% for subfield in prototype_form %}
+            <div role="group">
+            {{ render_subfield_and_button(subfield) }}
+            </div>
+        {% endfor %}
+    </template>
+    <button type="button" onclick="addFieldListItem(event)">Add</button>
+
+    {% if field.errors %}
+        <small style="color: var(--pico-del-color);">
+            {% for error in field.errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </small>
+    {% endif %}
+
+</div>

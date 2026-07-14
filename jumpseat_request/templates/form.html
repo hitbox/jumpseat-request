@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+
+{% from "macro.html" import render_form %}
+
+
+{% block content %}
+    <div class="center">
+        <div>
+            {% if form.__doc__ is not none %}
+            <h3>{{ form.__doc__ }}</h3>
+            {% endif %}
+            {% if form is defined %}
+            <form method="POST">
+                {{ render_form(form) }}
+            </form>
+            {% if help %}<small>{{ help }}</small>{% endif %}
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

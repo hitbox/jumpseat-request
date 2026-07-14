@@ -1,0 +1,17 @@
+{% extends "admin/base.html" %}
+
+
+{% from "macro.html" import render_form %}
+
+
+{% block content %}
+    {{ super() }}
+    {% if form.__doc__ is not none %}
+        <h3>{{ form.__doc__ }}</h3>
+    {% endif %}
+    {% if form is defined %}
+        <form method="POST">
+            {{ render_form(form) }}
+        </form>
+    {% endif %}
+{% endblock %}

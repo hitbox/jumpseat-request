@@ -1,0 +1,46 @@
+{% extends "admin/base.html" %}
+
+
+{% from "macro.html" import render_form %}
+
+
+{% block content %}
+    {{ super() }}
+    {% if table.description is defined and table.description %}
+        <p>{{ table.description }}</p>
+    {% endif %}
+    {% if note is defined and note %}<aside><p>{{ note }}</p></aside>{% endif %}
+    {% if new_endpoint is defined and new_endpoint %}
+        <p>
+        <a href="{{ url_for(new_endpoint) }}">New {{ model_class.__name__ }}</a>
+        </p>
+    {% endif %}
+    {% if not pagination.items %}
+        <p>No objects</p>
+    {% else %}
+        {% if pagination_doc is defined and pagination_doc %}<small>{{ pagination_doc }}</small>{% endif %}
+        <table>
+            <thead>
+                <tr>{% for column in table.columns %}
+                    {% set header = column.header or column.attrname %}
+                    <th>{{ header }}</th>
+                {% endfor %}</tr>
+            </thead>
+            <tbody>{% for obj in pagination %}
+                    {% if edit_endpoint is not none %}
+                        {% set href = edit_endpoint(obj) %}
+                    {% else %}
+                        {% set href = none %}
+                    {% endif %}
+                    <tr{% if href %} data-href="{{ href }}"{% endif %}>{% for column in table.columns %}
+                    <td>{{ column(obj) }}</td>{% endfor %}
+                </tr>{% endfor %}
+            </tbody>
+        </table>
+    {% endif %}{# if pagination #}
+    {% if form is defined %}
+        <form>
+            {{ render_form(form) }}
+        </form>
+    {% endif %}
+{% endblock %}

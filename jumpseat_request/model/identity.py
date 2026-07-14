@@ -1,6 +1,8 @@
 from jumpseat_request.extension import db
 
-class Identity(db.Model):
+from .mixin import ModelMixin
+
+class Identity(db.Model, ModelMixin):
     """
     Identity from external authorization provider.
     """

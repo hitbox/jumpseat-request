@@ -1,0 +1,65 @@
+{% from "macro.html" import render_css %}
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+        <h3>Jump Seat Request Created - {{ jumpseat_request.flight_number }} {{ jumpseat_request.flight_date_formatted }}</h3>
+        {% if has_decider_recipient %}
+            {# give the recipient a link to decide request if any are user.is_decider #}
+            <p>
+                <a href="{{ url_for('jumpseat_request.decide_jumpseat_request', request_id=jumpseat_request.id, _external=True) }}">Click to approve or deny request</a>
+            </p>
+        {% endif %}
+        {% if comment is defined and comment %}<p>{{ comment }}</p>{% endif %}
+        <strong>Request ID</strong>
+        {% if admin_in_recipients %}
+            <div>
+                {% set url = url_for('admin.jumpseat_request_edit', id=jumpseat_request.id, _external=True) %}
+                <a class="data" href="{{ url }}">{{ jumpseat_request.id }}</a>
+            </div>
+        {% else %}
+            <pre>{{ jumpseat_request.id }}</pre>
+        {% endif %}
+        {% if jumpseat_request.request_by %}
+        <strong>Created by</strong>
+        <div>
+        <a href="mailto:{{ jumpseat_request.request_by.email_address }}">{{ jumpseat_request.request_by.email_address }}</a> 
+        </div>
+        <strong>Created at</strong>
+        <div class="data">
+            {{ jumpseat_request.created_at_formatted }}
+        </div>
+        {% endif %}
+        </div>
+        {% if guest_verfiy_email_token is defined and guest_verfiy_email_token %}
+            <p>Request created by guest account.</p>
+            <p><a href="{{ url_for('email_verification.verify_email', token=guest_verfiy_email_token, _external=true) }}">Click to verify your email address and register an account.</a></p>
+        {% endif %}
+        <dl>
+            <dt>Flight</dt>
+            <dd>{{ jumpseat_request.flight_number }}</dd>
+            <dt>Date</dt>
+            <dd>{{ jumpseat_request.flight_date_formatted }}</dd>
+        </dl>
+        <h3>Employee Info</h3>
+        <dl>
+            <dt>Employing Airline</dt>
+            <dd>{{ jumpseat_request.employee_airline[config.JUMPSEAT_REQUEST_SHOW_AIRLINE_CODE] }}</dd>
+            <dt>Employee Number</dt>
+            <dd>{{ jumpseat_request.employee_number }}</dd>
+            {% if jumpseat_request.employee_name %}
+            <dt>Name</dt>
+            <dd>{{ jumpseat_request.employee_name }}</dd>
+            {% endif %}
+            <dt>Email</dt>
+            <dd>{{ jumpseat_request.employee_email }}</dd>
+            {% if jumpseat_request.employee_phone %}
+            <dt>Phone</dt>
+            <dd>{{ jumpseat_request.employee_phone }}</dd>
+            {% endif %}
+        </dl>
+    </body>
+</html>

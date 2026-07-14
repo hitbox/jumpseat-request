@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+        <h3>Jump Seat Request Decided - {{ jumpseat_request.flight_number }} {{ jumpseat_request.flight_date_formatted }}</h3>
+        <strong>Request ID</strong>
+        <pre>{{ jumpseat_request.id }}</pre>
+        {% if jumpseat_request.request_by %}
+        <strong>Created by</strong>
+        <span>{{ jumpseat_request.request_by.email_address }}</span>{% endif %}</h3>
+        {% if comment is defined %}<p>{{ comment }}</p>{% endif %}
+        {% if jumpseat_request.reason %}<strong>Reason</strong><p>{{ jumpseat_request.reason }}</p>{% endif %}
+        <strong>Status</strong>
+        <p>{{ jumpseat_request_status }}</p>
+        <dl>
+            <dt><strong>Flight</strong></dt>
+            <dd>{{ jumpseat_request.flight_number }}</dd>
+            <dt><strong>Date</strong></dt>
+            <dd>{{ jumpseat_request.flight_date }}</dd>
+        </dl>
+        <h3>Employee Info</h3>
+        <dl>
+            <dt><strong>Employing Airline</strong></dt>
+            <dd>{{ jumpseat_request.employee_airline[config.JUMPSEAT_REQUEST_SHOW_AIRLINE_CODE] }}</dd>
+            <dt><strong>Employee Number</strong></dt>
+            <dd>{{ jumpseat_request.employee_number }}</dd>
+            {% if jumpseat_request.employee_name %}
+            <dt><strong>Name</strong></dt>
+            <dd>{{ jumpseat_request.employee_name }}</dd>
+            {% endif %}
+            <dt><strong>Email</strong></dt>
+            <dd>{{ jumpseat_request.employee_email }}</dd>
+            {% if jumpseat_request.employee_phone %}
+            <dt><strong>Phone</strong></dt>
+            <dd>{{ jumpseat_request.employee_phone }}</dd>
+            {% endif %}
+        </dl>
+    </body>
+</html>

@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+        <h3>Email Verification</h3>
+        <p><a href="{{ url_for('email_verification.verify_email', token=token, _external=True) }}">Click to confirm email</a></p>
+    </body>
+</html>

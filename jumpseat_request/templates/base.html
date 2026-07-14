@@ -1,31 +1,61 @@
+{% from "macro.html" import render_link_with_current %}
 <!doctype html>
 <html lang="en">
     <head>{% block head %}
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}{{ config.JUMPSEAT_REQUEST_TITLE }}{% endblock title %}</title>
-        <link rel="icon" type="image/png" href="{{ url_for('static', filename="favicon.png") }}">
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename="favicon-32x32.png") }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='flatpickr.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='pico.orange.min.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
+        <script src="{{ url_for('static', filename='flatpickr.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='site.js') }}"></script>
     {% endblock head %}</head>
     <body>{% block body %}
-        <nav class="noprint">
+        <nav class="container">
+            <ul>
+                <li><strong>{{ config.JUMPSEAT_REQUEST_TITLE }}</strong></li>
+            </ul>
+            {% if current_user.is_authenticated %}
+            <ul>
+                {% if current_user.is_decider %}
+                    <li>{{ render_link_with_current(url_for('jumpseat_request.list_jumpseat_requests'), 'Decide', 'jumpseat_request.list_jumpseat_requests_list') }}</li>
+                {% endif %}
+                <li>{{ render_link_with_current(url_for('jumpseat_request.landing_page'), 'Request', 'jumpseat_request.landing_page') }}</li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('user.edit_account', user_id=current_user.id) }}">Edit Account</a></li>
+                {% if current_user.is_admin %}
+                <li>{{ render_link_with_current(url_for('admin.root'), 'Admin', 'admin') }}</li>
+                {% endif %}
+            </ul>
+            {% else %}{# current_user.is_authenticated #}
+            <ul>
+                <li><a href="{{ url_for('jumpseat_request.landing_page') }}">Request Jump Seat</a></li>
+                <li>{{ render_link_with_current(url_for('auth.login'), 'Login', 'auth.login') }}</li>
+                <li>
+                    {{ render_link_with_current(url_for('user.create_account'), 'Create an account', 'user.create_account') }}
+                </li>
+            </ul>
+            {% endif %}
         </nav>
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-        <aside class="flash noprint">
-            <ul id="flashes">
+            <ul class="container">
                 {% for category, message in messages %}
-                <li class="flash {{ category or 'info'  }}">
-                    <div class="message {{category}}">{% for line in message.splitlines() %}
-                        <div>{{ line|safe }}</div>{% endfor %}
-                    </div>
-                </li>
+                    <article class="flash {{ category or 'info' }}">
+                        <div class="message {{category}}">{% for line in message.splitlines() %}
+                            <div>{{ line|safe }}</div>{% endfor %}
+                        </div>
+                    </article>
                 {% endfor %}
             </ul>
-        </aside>
         {% endif %}
         {% endwith %}
-        <main>{% block main %}
-            {% block header %}{% endblock header %}
+        <main class="container">{% block main %}
+                {% block header %}{% if false %}<div class="center">
+                <a href="{{ url_for('jumpseat.list_requests') }}">Root</a>
+            </div>{% endif %}{% endblock header %}
             {% block content %}{% endblock content %}
             {% block footer %}{% endblock footer %}
         {% endblock %}</main>

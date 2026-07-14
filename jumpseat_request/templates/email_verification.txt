@@ -1,0 +1,4 @@
+Email Verification
+Go to 
+{{ url_for('email_verification.verify_email', token=token, _external=True) }}
+To confirm email address

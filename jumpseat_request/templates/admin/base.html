@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+
+{% from "macro.html" import render_link_with_current %}
+
+
+{% block content %}
+    <h3 class="danger">Administration</h3>
+    <h3>Object links</h3>
+    <nav>
+        <ul>{% for link in links %}
+            <li>
+                {% set url = url_for(link.endpoint) %}
+                {{ render_link_with_current(url, link.name, link.current_for) }}
+            </li>
+        {% endfor %}</ul>
+    </nav>
+{% endblock %}

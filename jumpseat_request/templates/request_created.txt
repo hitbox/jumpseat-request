@@ -1,0 +1,24 @@
+Jump Seat Request Created{% if jumpseat_request.request_by %} by {{ jumpseat_request.request_by.email_address }}{% endif %}
+
+Flight Request
+
+Sender: {{ sender }}
+
+---
+Flight {{ jumpseat_request.flight_number }}
+  Date {{ jumpseat_request.flight_date }}
+
+Employee Info
+---
+        Airline {{ jumpseat_request.employee_airline.configured_display_code }}
+Employee Number {{ jumpseat_request.employee_number }}
+{% if jumpseat_request.employee_name %}
+           Name {{ jumpseat_request.employee_name }}
+{% endif %}
+          Email {{ jumpseat_request.employee_email }}
+{% if jumpseat_request.employee_phone %}
+          Phone {{ jumpseat_request.employee_phone }}
+{% endif %}
+
+Link to approve or deny request.
+{{ url_for('jumpseat_request.decide_jumpseat_request', request_id=jumpseat_request.id, _external=True) }}

@@ -1,13 +1,11 @@
 {% extends "base.html" %}
 
+{% from "macro.html" import render_form %}
+
 
 {% block content %}
+<p>Login</p>
 <form method="POST">
-    {% for field in login_form %}
-        {% if field.type != 'HiddenField' %}
-        {{ field.label }}
-        {{ field }}
-        {% endif %}
-    {% endfor %}
+    {{ render_form(login_form) }}
 </form>
 {% endblock %}

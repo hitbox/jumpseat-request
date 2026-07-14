@@ -3,7 +3,7 @@
 {% block content %}
     <h1>Jump seat Requests</h1>
     {% if not jumpseat_requests %}
-        <p>No jumpseat requests</p>
+        <p>No jumpseat requests for {{ current_user.username }}</p>
     {% else %}
     {% for request in jumpseat_requests %}<div>
         <div>{{ request.employee }}</div>

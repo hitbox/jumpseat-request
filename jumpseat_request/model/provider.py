@@ -2,7 +2,9 @@ import uuid
 
 from jumpseat_request.extension import db
 
-class Provider(db.Model):
+from .mixin import ModelMixin
+
+class Provider(db.Model, ModelMixin):
 
     id = db.Column(
         db.UUID(as_uuid=True),
