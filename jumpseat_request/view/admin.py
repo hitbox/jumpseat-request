@@ -120,7 +120,8 @@ def make_views_for_models(specs):
         edit_form = spec.get('edit_form')
         if edit_form:
             # Callable because we need a url for each object in the list.
-            edit_endpoint = make_edit_endpoint(table_name, pkname=spec.get('pkname'))
+            pkname = spec.get('pkname', 'id')
+            edit_endpoint = make_edit_endpoint(table_name, pkname=pkname)
             list_kwargs.setdefault('edit_endpoint', edit_endpoint)
             after_endpoint = spec.get('edit_after_endpoint', f'admin.{table_name}_list')
             view_kwargs = {

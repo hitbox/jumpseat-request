@@ -69,7 +69,7 @@ class ApplicationSetting(db.Model, ModelMixin):
 
     @classmethod
     def as_data(cls):
-        return {obj.name: obj.value for obj in db.session.scalars(db.select(cls))}
+        return {obj.name.lower(): obj.value for obj in db.session.scalars(db.select(cls))}
 
     @classmethod
     def get_settings_form(cls):
@@ -78,10 +78,10 @@ class ApplicationSetting(db.Model, ModelMixin):
         members = sorted(ApplicationSettingEnum, key=attrgetter('name'))
         for member in members:
             field = member.form_field
-            setattr(SettingsForm, member.name.lower(), field)
+            attr = member.name.lower()
+            setattr(SettingsForm, attr, field)
 
             # Update values
-            #field = getattr(SettingsForm, member.name.lower())
             ident = {'name': member.name}
             setting = db.session.get(cls, ident)
             field.data = setting.value
