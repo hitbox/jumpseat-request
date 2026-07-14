@@ -68,9 +68,9 @@ def seed_db():
     """
     seed_database()
 
-def make_edit_endpoint(name):
+def make_edit_endpoint(name, pkname='id'):
     def endpoint(obj):
-        return url_for(f'admin.{name}_edit', id=obj.id)
+        return url_for(f'admin.{name}_edit', id=getattr(obj, pkname))
     return endpoint
 
 def make_pagination_getter(model_class):
@@ -117,7 +117,7 @@ def make_views_for_models(specs):
         edit_form = spec.get('edit_form')
         if edit_form:
             # Callable because we need a url for each object in the list.
-            edit_endpoint = make_edit_endpoint(table_name)
+            edit_endpoint = make_edit_endpoint(table_name, pkname=spec.get('pkname'))
             list_kwargs.setdefault('edit_endpoint', edit_endpoint)
             after_endpoint = spec.get('edit_after_endpoint', f'admin.{table_name}_list')
             init_kwargs = {

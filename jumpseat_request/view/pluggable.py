@@ -111,13 +111,17 @@ class EditObjectView(View):
         if instance is None:
             abort(404, description=f'Instance not found {kwargs}')
 
+        form_class = self.form_class
+        if callable(form_class):
+            form_class = form_class()
+
         if request.method == 'GET':
             # Passing the formdata keyword in, when it's empty, breaks
             # checkboxes rendering.
-            form = self.form_class(obj=instance)
+            form = form_class(obj=instance)
 
         elif request.method == 'POST':
-            form = self.form_class(formdata=request.form, obj=instance)
+            form = form_class(formdata=request.form, obj=instance)
 
             if form.validate():
                 form.populate_obj(instance)
@@ -129,7 +133,7 @@ class EditObjectView(View):
 
         context = {
             'model_class': self.model_class,
-            'form_class': self.form_class,
+            'form_class': form_class,
             'form': form,
         }
         return render_template(self.template, **context)

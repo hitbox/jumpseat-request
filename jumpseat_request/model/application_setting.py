@@ -48,6 +48,24 @@ class ApplicationSetting(db.Model, ModelMixin):
         return missing
 
     @classmethod
+    def get_settings_form(cls):
+        class SettingsForm(FlaskForm):
+            """
+            Application settings initialization form
+            """
+            update = SubmitField()
+
+            def save(self):
+                for member in ApplicationSettingEnum:
+                    field = getattr(self, member.name.lower(), None)
+                    if field:
+                        setting = cls(name=member.name, value=field.data)
+                        db.session.add(setting)
+
+        for member in ApplicationSettingEnum:
+            setattr(SettingsForm, member.name, member.form_field)
+
+    @classmethod
     def missing_settings_form(cls):
         missing = cls.missing_settings()
         if missing:

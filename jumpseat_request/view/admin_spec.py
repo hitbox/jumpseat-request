@@ -230,6 +230,8 @@ admin_specs_for_views = [
     },
     {
         'model_class': ApplicationSetting,
+        'edit_form': ApplicationSetting.get_settings_form,
+        'pkname': 'name',
         'html_table': Table([
             Column(
                 attrname = 'name',
