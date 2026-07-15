@@ -17,7 +17,6 @@ from jumpseat_request.model import User
 from jumpseat_request.model.user import password_hasher
 
 from .mixin import OrderedFieldsMixin
-from .user import UserFormMixin
 from .employee import EmployeeSubForm
 
 def unique_email_address(form, field):

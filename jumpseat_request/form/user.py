@@ -73,18 +73,7 @@ def confirm_password_field(**kwargs):
     return PasswordField(**kwargs)
 
 
-class UserFormMixin:
-
-    email_address = email_address_field()
-
-    is_admin = is_admin_field()
-
-    is_active = is_active_field()
-
-    employee = employee_field()
-
-
-class EditUserForm(OrderedFieldsMixin, FlaskForm, UserFormMixin):
+class EditUserForm(FlaskForm):
     """
     Edit user account.
     """
@@ -96,6 +85,14 @@ class EditUserForm(OrderedFieldsMixin, FlaskForm, UserFormMixin):
         'is_admin',
         'is_active',
     ]
+
+    email_address = email_address_field()
+
+    is_admin = is_admin_field()
+
+    is_active = is_active_field()
+
+    employee = employee_field()
 
     # Employee associated with methods of contacts.
     is_decider = is_decider_field()
@@ -143,7 +140,7 @@ class EditAccountForm(OrderedFieldsMixin, FlaskForm):
     update = SubmitField()
 
 
-class NewUserForm(OrderedFieldsMixin, FlaskForm, UserFormMixin):
+class NewUserForm(FlaskForm):
     """
     Admin form to create a new user.
     """
@@ -156,9 +153,21 @@ class NewUserForm(OrderedFieldsMixin, FlaskForm, UserFormMixin):
         'is_decider',
     ]
 
+    email_address = email_address_field()
+
+    is_active = is_active_field()
+
+    # Employee associated with methods of contacts.
     is_decider = is_decider_field()
 
+    is_admin = is_admin_field()
+
+    is_decider = is_decider_field()
+
+    employee = employee_field()
+
     password_hash = PasswordField(
+        'Password',
         validators = [DataRequired()],
     )
 
