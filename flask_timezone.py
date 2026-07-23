@@ -1,3 +1,4 @@
+from datetime import date
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -12,3 +13,6 @@ class TimeZone:
 
     def now(self):
         return datetime.now(tz=self.zoneinfo)
+
+    def today(self):
+        return date.today()

@@ -1,5 +1,4 @@
-from wtforms import BooleanField
-from wtforms import Form
+from flask_wtf import FlaskForm
 from wtforms import HiddenField
 from wtforms import PasswordField
 from wtforms import SelectField
@@ -9,12 +8,7 @@ from wtforms import ValidationError
 from wtforms.validators import DataRequired
 from wtforms.validators import EqualTo
 
-from jumpseat_request.extension import db
-from jumpseat_request.model import Employee
-from jumpseat_request.model import Airline
-from jumpseat_request.model.user import password_hasher
-
-class EditAirlineForm(Form):
+class EditAirlineForm(FlaskForm):
     """
     Edit user account.
     """
@@ -23,7 +17,7 @@ class EditAirlineForm(Form):
     update = SubmitField()
 
 
-class NewAirlineForm(Form):
+class NewAirlineForm(FlaskForm):
     """
     Create a new user.
     """

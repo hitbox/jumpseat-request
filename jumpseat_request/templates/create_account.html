@@ -9,6 +9,7 @@
         <h3>{{ form.__doc__ }}</h3>
     {% endif %}
     {% if form is defined %}
+        <p>Enter your email address and we’ll send you a link to verify your account.</p>
         <form method="POST">
             {{ render_form(form) }}
         </form>

@@ -46,6 +46,14 @@ document.addEventListener('DOMContentLoaded', function () {
         window.location = row.getAttribute('data-href');
     });
 
+    document.querySelectorAll('[data-href]').forEach(function(el) {
+        console.log(el);
+        // click event for elements with data-href
+        el.addEventListener('click', function(event) {
+            window.location = el.dataset['href'];
+        });
+    });
+
     flatpickr('input[type=datetime]', {
         enableTime: true,
         dateFormat: 'Y-m-d H:i',

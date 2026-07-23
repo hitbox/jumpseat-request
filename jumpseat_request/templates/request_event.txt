@@ -1,4 +1,4 @@
-Jump Seat Request Created{% if jumpseat_request.request_by %} by {{ jumpseat_request.request_by.email_address }}{% endif %}
+{{ jumpseat_request.title_string(verb) }}
 
 Flight Request
 
@@ -6,7 +6,7 @@ Sender: {{ sender }}
 
 ---
 Flight {{ jumpseat_request.flight_number }}
-  Date {{ jumpseat_request.flight_date }}
+  Date {{ jumpseat_request.flight_datetime_formatted }}
 
 Employee Info
 ---

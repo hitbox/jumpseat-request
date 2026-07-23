@@ -1,7 +1,7 @@
 from flask import session
 from flask_login import current_user
 from flask_wtf import FlaskForm
-from wtforms import DateField
+from wtforms import DateTimeField
 from wtforms import FieldList
 from wtforms import FormField
 from wtforms import HiddenField
@@ -16,23 +16,19 @@ from wtforms_sqlalchemy.fields import QuerySelectField
 from jumpseat_request import settings
 from jumpseat_request.extension import timezone
 from jumpseat_request.form import EmployeeSubForm
-from jumpseat_request.guest import get_current_user_or_create_guest
 from jumpseat_request.model import Airline
 from jumpseat_request.model import Employee
 from jumpseat_request.model import JumpseatRequest
 from jumpseat_request.model import User
 from jumpseat_request.model.user import password_hasher
-from jumpseat_request.schema import JumpseatRequestDataSchema
-
-jumpseat_request_data_schema = JumpseatRequestDataSchema()
 
 def upper(x):
     if isinstance(x, str):
         x = x.upper()
     return x
 
-def flight_date_field(label=None):
-    return DateField(
+def flight_datetime_field(label=None):
+    return DateTimeField(
         label = label,
         default = lambda: timezone.now().date(),
         validators = [
@@ -85,16 +81,16 @@ class JumpseatRequestSubform(FlaskForm):
     class Meta:
         csrf = False
 
-    flight_date = flight_date_field()
-
     flight_number = flight_number_field()
+
+    flight_datetime = flight_datetime_field()
 
 
 class JumpseatRequestFormMixin:
 
-    flight_date = flight_date_field()
-
     flight_number = flight_number_field()
+
+    flight_datetime = flight_datetime_field()
 
     employee_airline = employee_airline_field()
 
@@ -124,9 +120,9 @@ class JumpseatRequestFormMixin:
 
 class EditJumpseatRequestAdminForm(FlaskForm):
 
-    flight_date = flight_date_field()
-
     flight_number = flight_number_field()
+
+    flight_datetime = flight_datetime_field()
 
     employee_airline = employee_airline_field()
 

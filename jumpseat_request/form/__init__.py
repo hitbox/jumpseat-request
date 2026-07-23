@@ -13,11 +13,11 @@ from .jumpseat_request import NewJumpseatRequestForm
 from .login import LoginForm
 from .notification import EditNotificationRuleForm
 from .notification import NotificationRecipientSubform
-from .register import RegisterUserForm
 from .user import ChangePassword
 from .user import EditAccountForm
 from .user import EditUserForm
 from .user import NewUserForm
+from .user import RegisterUserForm
 from .verify_email import VerifyEmailForm
 
 def form_obj_diff(form, obj):

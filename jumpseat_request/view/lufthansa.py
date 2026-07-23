@@ -1,18 +1,55 @@
+import csv
+
 import click
 
 from flask import Blueprint
 
-from jumpseat_request.signal import jumpseat_request_signals
 from jumpseat_request.extension import db
+from jumpseat_request.model import Leg
 from jumpseat_request.model import NotificationRecipient
 from jumpseat_request.model import NotificationRule
 from jumpseat_request.model import User
+from jumpseat_request.signal import jumpseat_request_signals
 
-notification_bp = Blueprint('notification', __name__)
+lufthansa_bp = Blueprint('lufthansa', __name__)
 
-notification_bp.cli.help = 'Administrate notification rules and their recipients.'
+lufthansa_bp.cli.help = 'Administrate external Lufthansa database related data.'
 
-@notification_bp.cli.command('create')
+@lufthansa_bp.cli.command('create-db')
+def create_db():
+    db.engines['lsyrept'].echo = True
+    db.create_all('lsyrept')
+    click.echo('Created schema for lsyrept')
+
+@lufthansa_bp.cli.command('load')
+@click.argument(
+    'sourcepath',
+    type=click.Path(
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+)
+def load(sourcepath):
+    """
+    Load lufthansa Leg table data from CSV taking only the fields that are
+    mapped.
+    """
+    with open(sourcepath, 'r', newline='') as sourcefile:
+        mapper = db.inspect(Leg)
+        take_keys = set([c.key for c in mapper.columns])
+        reader = csv.DictReader(sourcefile)
+        for row_data in reader:
+            data = {
+                key.lower(): value
+                for key, value in row_data.items()
+                if key.lower() in take_keys
+            }
+            instance = Leg(**data)
+            db.session.add(instance)
+        db.session.commit()
+
+@lufthansa_bp.cli.command('create')
 @click.option('--name', required=True, help='Notification rule name.')
 @click.option('--blurb', required=True, help='Notification comment.')
 @click.option('--signal-name', required=True, help='Internal signal event name.')
@@ -35,7 +72,7 @@ def create_notification_rule(name, blurb, signal_name, created_age):
     db.session.add(notification_rule)
     db.session.commit()
 
-@notification_bp.cli.command('add-recipient')
+@lufthansa_bp.cli.command('add-recipient')
 @click.argument('name')
 @click.option('--email-address', required=True, help='Email address to add to notification rule.')
 @click.option('--force', is_flag=True)
@@ -63,7 +100,7 @@ def add_recipient(name, email_address, force):
     notification_rule.recipients.append(NotificationRecipient(email_address=email_address))
     db.session.commit()
 
-@notification_bp.cli.command('list-rules')
+@lufthansa_bp.cli.command('list-rules')
 @click.option('--with-emails', is_flag=True)
 def add_recipient(with_emails):
     """

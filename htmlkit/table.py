@@ -6,10 +6,11 @@ from markupsafe import Markup
 
 class Column:
 
-    def __init__(self, attrname, header=None, cast=None):
+    def __init__(self, attrname, header=None, cast=None, th_attrs=None):
         self.attrname = attrname
         self.header = header
         self.cast = cast
+        self.th_attrs = th_attrs
 
     def __str__(self):
         return self.attrname

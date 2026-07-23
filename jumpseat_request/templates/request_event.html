@@ -6,7 +6,7 @@
         <meta charset="utf-8">
     </head>
     <body>
-        <h3>Jump Seat Request Created - {{ jumpseat_request.flight_number }} {{ jumpseat_request.flight_date_formatted }}</h3>
+        <h3>{{ jumpseat_request.title_string(verb) }}</h3>
         {% if has_decider_recipient %}
             {# give the recipient a link to decide request if any are user.is_decider #}
             <p>
@@ -34,10 +34,8 @@
         </div>
         {% endif %}
         </div>
-        {% if guest_verfiy_email_token is defined and guest_verfiy_email_token %}
-            <p>Request created by guest account.</p>
-            <p><a href="{{ url_for('email_verification.verify_email', token=guest_verfiy_email_token, _external=true) }}">Click to verify your email address and register an account.</a></p>
-        {% endif %}
+        <h3>Jump Seat Request</h3>
+        <h3>Flight</h3>
         <dl>
             <dt>Flight</dt>
             <dd>{{ jumpseat_request.flight_number }}</dd>

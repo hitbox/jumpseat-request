@@ -4,15 +4,30 @@ from . import settings
 from .extension import db
 from .extension import email_verify
 
-class EmailSubscriber:
+class AccountEmailSubscriber:
     """
-    Send emails for jumpseat request signals like created and decided.
+    Subscribe to account events.
     """
 
     def __init__(self, text_body_template, html_body_template, subject):
         self.subject = subject
         self.text_body_template = text_body_template
         self.html_body_template = html_body_template
+
+    def __call__(self, sender, user):
+        pass
+
+
+class JumpseatRequestEmailSubscriber:
+    """
+    Send emails for jumpseat request signals like created and decided.
+    """
+
+    def __init__(self, text_body_template, html_body_template, subject, verb=None):
+        self.subject = subject
+        self.text_body_template = text_body_template
+        self.html_body_template = html_body_template
+        self.verb = verb
 
     def __call__(self, sender, jumpseat_request, signal, comment=None):
         """
@@ -26,37 +41,37 @@ class EmailSubscriber:
         for notification_rule in NotificationRule.get_by_signal(signal):
             submitter_email = jumpseat_request.employee_email
             context = {
+                'comment': comment,
                 'jumpseat_request': jumpseat_request,
                 'jumpseat_request_status': jumpseat_request.status(),
                 'sender': sender,
-                'comment': comment,
                 'submitter_email': submitter_email,
+                'verb': self.verb,
             }
+            # Flatten recipient objects to email addresses passing context to
+            # allow some to be the things like the subitter's email.
+            recipient_emails = [
+                recipient.email_address.format(**context)
+                for recipient in notification_rule.recipients
+            ]
 
-            # Flatten recipient objects to email addresses
-            recipient_emails = [recipient.email_address.format(**context) for recipient in notification_rule.recipients]
+            # User objects for email addresses where available.
+            query = (
+                db.select(User)
+                .where(
+                    User.email_address.in_(recipient_emails)
+                )
+            )
+            recipient_users = db.session.scalars(query).all()
 
             # Flag that an admin is in the recipients.
-            admin_in_recipients = any(User.by_email(email).is_admin == True for email in recipient_emails if User.by_email(email))
+            users_is_admin = (user.is_admin for user in recipient_users)
+            admin_in_recipients = any(users_is_admin)
             context['admin_in_recipients'] = admin_in_recipients
 
-            if jumpseat_request.request_by.is_guest:
-                submitter_in_recipients = any(email == jumpseat_request.employee_email for email in recipient_emails)
-                if submitter_in_recipients:
-                    # Give the submitter_email the guest token link to register
-                    guest_verfiy_email_token = email_verify.create_token(
-                        email = submitter_email,
-                        user_id = str(jumpseat_request.request_by.id),
-                        jumpseat_request_id = str(jumpseat_request.id),
-                    )
-                    context['guest_verfiy_email_token'] = guest_verfiy_email_token
-
             # Add flag for template if any recipients are decider accounts.
-            for recipient in notification_rule.recipients:
-                user = User.by_email(recipient.email_address)
-                if user and user.is_decider:
-                    context['has_decider_recipient'] = True
-                    break
+            users_is_decider = (user.is_decider for user in recipient_users)
+            context['has_decider_recipient'] = any(users_is_decider)
 
             # Recipients email addresses list
             recipients = [

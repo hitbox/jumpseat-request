@@ -2,6 +2,36 @@
 {% set button_types = ('SubmitField') %}
 
 
+{% macro render_jumpseat_action(forms, jumpseat_request) %}
+    <article>
+        <header>
+            <strong>{{ jumpseat_request.flight_number }}</strong>
+            <strong>{{ jumpseat_request.flight_datetime_formatted }}</strong>
+        </header>
+        <div role="container">
+            <div>
+                <strong>Status</strong>
+                <div>{{ jumpseat_request.status_html() }}</div>
+                <strong>Created</strong>
+                <div>{{ jumpseat_request.created_at_formatted }}</div>
+            </div>
+            <form class="action" method="POST" action="{{ url_for('jumpseat_request.decide_jumpseat_request', request_id=jumpseat_request.id) }}">
+                {% set form = forms[jumpseat_request.id|string] %}
+                {{ form.hidden_tag() }}
+                {% if form.errors %}<pre>{{ form.erros }}</pre>{% endif %}
+                <fieldset>
+                    {{ render_field(form.reason) }}
+                    <div role="group">
+                        {{ form.approve }}{{ form.deny }}
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </article>
+{% endmacro %}
+
+
+
 {% macro render_form(form) %}
     {{ form.hidden_tag() }}
     {% set fields = form | rejectattr('type', 'in', ('HiddenField', 'SubmitField', 'CSRFTokenField')) %}
@@ -56,7 +86,7 @@
     {% else %}
         {% set is_current = false %}
     {% endif %}
-    <a href="{{ url }}" role="button" class="tab {% if is_current %}current{% endif %}">{{ text }}</a>
+    <a href="{{ url }}" class="tab{% if is_current %} current{% endif %}">{{ text }}</a>
 {% endmacro %}
 
 

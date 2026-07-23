@@ -8,7 +8,9 @@
     {% if form.__doc__ is not none %}
     <h3>{{ form.__doc__ }}</h3>
     {% endif %}
-    {% if extra is defined %}<div>{{ extra }}</div>{% endif %}
+    {% if jumpseat_request is defined %}
+        {{ jumpseat_request.html_card() }}
+    {% endif %}
     {% if form is defined %}
     <form method="POST">
         {{ render_form(form) }}

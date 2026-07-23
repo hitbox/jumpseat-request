@@ -9,6 +9,7 @@ from .email_job import EmailJobRecipient
 from .employee import Employee
 from .identity import Identity
 from .jumpseat_request import JumpseatRequest
+from .lufthansa import Leg
 from .notification import JumpseatRequestNotificationRuleAssoc
 from .notification import NotificationRecipient
 from .notification import NotificationRule

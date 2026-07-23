@@ -1,0 +1,23 @@
+{% extends "admin/base.html" %}
+
+
+{% block content %}
+    {{ super() }}
+    <h3>{{ model_class.__doc__ }}</h3>
+    {% if instance.sent_at %}
+        <strong>Sent</strong>
+        <p>{{ instance.sent_at_formatted }}</p>
+    {% endif %}
+    <strong>Subject</strong>
+    <p>{{ instance.subject }}</p>
+    <strong>From</strong>
+    <p>{{ instance.from_email_address }}</p>
+    <strong>To</strong>
+    <ul>{% for recipient in instance.recipient_objects %}
+        <li>
+            <a href="{{ recipient.email_address }}">{{ recipient.email_address }}</a>
+        </li>{% endfor %}
+    </ul>
+    <strong>Body</strong>
+    {{ instance.body_html|safe }}
+{% endblock %}

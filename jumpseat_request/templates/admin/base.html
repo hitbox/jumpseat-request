@@ -1,11 +1,9 @@
 {% extends "base.html" %}
 
 
-{% from "macro.html" import render_link_with_current %}
-
-
 {% block content %}
-    <h3 class="danger">Administration</h3>
+    {# new block for admin stuff to go in #}
+    <h3 class="center danger">Administration</h3>
     <h3>Object links</h3>
     <nav>
         <ul>{% for link in links %}

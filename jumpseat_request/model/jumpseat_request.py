@@ -19,7 +19,7 @@ from .user import User
 
 class JumpseatRequest(db.Model, ModelMixin):
     """
-    User or guest submitted request for jumpseat on a flight.
+    User submitted request for jumpseat on a flight.
     """
 
     id = db.Column(
@@ -28,14 +28,15 @@ class JumpseatRequest(db.Model, ModelMixin):
         default = uuid.uuid4,
     )
 
-    flight_date = db.Column(
-        db.Date,
+    flight_datetime = db.Column(
+        db.DateTime(timezone=True),
         nullable = False,
+        comment = 'Scheduled departure datetime.',
     )
 
     @property
-    def flight_date_formatted(self):
-        return self.flight_date.strftime(settings.date_format())
+    def flight_datetime_formatted(self):
+        return self.flight_datetime.strftime(settings.datetime_format())
 
     flight_number = db.Column(
         db.String,
@@ -127,6 +128,14 @@ class JumpseatRequest(db.Model, ModelMixin):
         back_populates = 'jumpseat_request',
     )
 
+    def title_string(self, verb):
+        string = f'Jump Seat Request'
+        string += ' ' + verb.title()
+        if self.request_by:
+            string += ' '
+            string += f'by {self.request_by.email_address}'
+        return string
+
     @hybrid_property
     def is_decided(self):
         return (~self.approved_at and ~self.denied_at)
@@ -161,6 +170,8 @@ class JumpseatRequest(db.Model, ModelMixin):
         # Compare all notification rules against pending requests
         from .notification import NotificationRule
 
+        # Undecided, unescalated, jump seat requests exceeding the notification
+        # rule's created_at age.
         query = (
             db.select(cls, NotificationRule)
             .where(

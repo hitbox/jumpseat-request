@@ -13,7 +13,7 @@ class ModelChoice(click.ParamType):
 
     def convert(self, value, param, context):
         choices = self.query_factory()
-        match = next((c for c in choices if self.value_getter(c) == value), None)
+        match = next((c for c in choices if self.value_getter(c) == value.casefold()), None)
         if match is None:
             self.fail(
                 f'{value!r} is not a valid choice.'

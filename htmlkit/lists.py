@@ -1,5 +1,6 @@
 from markupsafe import Markup
 
+
 def unordered_list(iterable, class_=None):
     open_tag = '<ul'
     if class_:

@@ -6,6 +6,7 @@ from flask import render_template
 from flask import request
 from flask import session as flask_session
 from flask import url_for
+from flask_login import current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField
 from wtforms import SubmitField
@@ -13,7 +14,7 @@ from wtforms.validators import DataRequired
 
 from . import extension
 from . import tasks
-from . import template_filter
+from . import globals_and_filters
 from . import view
 from .extension import db
 from .extension import timezone
@@ -27,10 +28,11 @@ def create_app():
     app.config.from_envvar('JUMPSEAT_REQUEST_CONFIG')
 
     PrefixMiddleware.init_app(app)
+
     extension.init_app(app)
-    view.init_app(app)
+    globals_and_filters.init_app(app)
     tasks.init_app(app)
-    template_filter.init_app(app)
+    view.init_app(app)
 
     nice_handle_exception = app.config.get('NICE_HANDLE_EXCEPTIONS', False)
 
@@ -46,20 +48,22 @@ def create_app():
         """
         return redirect(url_for('jumpseat_request.landing_page'))
 
-    @app.route('/messages')
-    def messsages():
-        flash('Info', 'info')
-        flash('Warning', 'warning')
-        flash('Danger', 'danger')
-        flash('Success', 'success')
-        flash('Multiple\nlines\nin one message', 'info')
-        return render_template('base.html')
+    if app.config.get('JUMPSEAT_DEVELOPMENT'):
+        @app.route('/messages')
+        def messsages():
+            flash('Info', 'info')
+            flash('Warning', 'warning')
+            flash('Danger', 'danger')
+            flash('Success', 'success')
+            flash('Multiple\nlines\nin one message', 'info')
+            return render_template('base.html')
 
     @app.before_request
     def init_app_settings():
         """
         Redirect any endpoint to update application settings if any not set.
         """
+        # ignore some endpoints
         if (
             request.endpoint is not None
             and
@@ -70,6 +74,8 @@ def create_app():
             )):
             return
 
+        # Allow the view that handles missing settings to go through for
+        # missing settings.
         missing_form_class = ApplicationSetting.missing_settings_form()
         if missing_form_class:
             if request.endpoint == 'app_settings.edit_required_settings':

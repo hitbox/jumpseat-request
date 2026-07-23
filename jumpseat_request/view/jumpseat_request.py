@@ -1,9 +1,12 @@
+import calendar
 import random
 import string
 import uuid
 
 from datetime import date
-from functools import wraps
+from datetime import datetime
+
+import click
 
 from flask import Blueprint
 from flask import abort
@@ -20,50 +23,41 @@ from markupsafe import Markup
 
 from jumpseat_request import settings
 from jumpseat_request import signal
-from jumpseat_request.authenticate import login_and_password_ok
 from jumpseat_request.extension import db
 from jumpseat_request.extension import login_manager
 from jumpseat_request.extension import timezone
-from jumpseat_request.form import JumpseatRequestActionForm
 from jumpseat_request.form import EditJumpseatRequestForm
+from jumpseat_request.form import JumpseatRequestActionForm
 from jumpseat_request.form import LoginForm
-from jumpseat_request.guest import get_current_user_or_create_guest
+from jumpseat_request.guard import require_is_decider
+from jumpseat_request.guard import require_password_ok
+from jumpseat_request.guard import response_for_reset_password
 from jumpseat_request.model import Airline
 from jumpseat_request.model import JumpseatRequest
+from jumpseat_request.model import Leg
 from jumpseat_request.model import User
-from jumpseat_request.schema import JumpseatRequestDataSchema
+from jumpseat_request.query import ranked_legs
+from jumpseat_request.query import newest_leg_scheduled_flights
 
 jumpseat_request_bp = Blueprint('jumpseat_request', __name__, url_prefix='/jumpseat')
 
-request_data_schema = JumpseatRequestDataSchema()
-
-def require_is_decider(func):
-    @wraps(func)
-    def wrapped(*args, **kwargs):
-        if not getattr(current_user, 'is_decider', False):
-            abort(
-                403,
-                description = f'Logged in account {current_user.email_address} does'
-                    ' not have permission to decide requests.'
-            )
-
-        return func(*args, **kwargs)
-    return wrapped
+def action_forms_by_id(jumpseats):
+    """
+    Jump Seat actions forms indexed by a list of jumpseat object ids.
+    """
+    forms = {
+        str(request.id): JumpseatRequestActionForm(obj=request)
+        for request in jumpseats
+    }
+    return forms
 
 @jumpseat_request_bp.route('/decide/<request_id>', methods=['GET', 'POST'])
-@login_and_password_ok
+@require_password_ok
+@require_is_decider
 def decide_jumpseat_request(request_id):
     """
     Approve a jump seat request proposal from a user or guest.
     """
-    # require decider-user login
-    if not current_user.is_decider:
-        abort(
-            403,
-            description = f'Logged in account {current_user.email_address} does'
-                ' not have permission to decide requests.'
-        )
-
     jumpseat_request = db.session.get(JumpseatRequest, request_id)
     if not jumpseat_request:
         abort(404, description='Request not found')
@@ -87,6 +81,7 @@ def decide_jumpseat_request(request_id):
     context = {
         'form': form,
         'extra': jumpseat_request.html_card(),
+        'jumpseat_request': jumpseat_request,
     }
     return render_template('edit_form.html', **context)
 
@@ -115,11 +110,7 @@ def list_jumpseat_requests(request_id):
         )
     )
     pagination = db.paginate(query)
-
-    forms = {
-        str(request.id): JumpseatRequestActionForm(obj=request)
-        for request in pagination
-    }
+    forms = action_forms_by_id(pagination)
 
     if request_id:
         jumpseat_request = db.session.get(JumpseatRequest, request_id)
@@ -128,8 +119,14 @@ def list_jumpseat_requests(request_id):
         if form.validate_on_submit():
             form.populate_obj(jumpseat_request)
             db.session.commit()
+            signal.jumpseat_request_decided.send(
+                # sender is first positional arg
+                request.endpoint,
+                signal = signal.jumpseat_request_decided,
+                jumpseat_request = jumpseat_request,
+            )
             flash('Request updated', 'success')
-            return redirect(url_for('.list_jumpseat_requests'))
+            return redirect(url_for(request.endpoint))
 
     context = {
         'pagination': pagination,
@@ -143,7 +140,7 @@ def get_data_for_random_autofill():
     eenumber = ''.join(random.choices(string.digits, k=4))
     phonedigit = random.choice(string.digits)
     data = {
-        'flight_date': date.today(),
+        'flight_datetime': datetime.now(),
         'flight_number': fnumber,
         'employee_number': f'EE{eenumber}',
         'employee_name': f'First{eenumber} Last',
@@ -171,12 +168,60 @@ def get_data_for_current_user():
         })
     return data
 
+@jumpseat_request_bp.route('/select-calendar')
+def select_calendar():
+    context = {
+        'calendar': calendar,
+        'current_month': timezone.today().month,
+    }
+
+    selected_month = int(request.args.get('month', '0'))
+
+    months = []
+    for month_num in range(1, 13):
+        month = {
+            'name': calendar.month_name[month_num],
+            'number': month_num,
+        }
+
+        if selected_month > 0:
+            query = newest_leg_scheduled_flights
+            query = query.where(
+                db.func.extract('month', ranked_legs.c.dep_sched_dt) == month_num,
+                ranked_legs.c.fn_carrier == 'GB',
+            )
+            scheduled_flights = db.session.scalars(query).all()
+
+            month.update({
+                'scheduled_flights': scheduled_flights,
+            })
+
+            dates = set([leg.dep_sched_date for leg in scheduled_flights])
+            dates_rel = {}
+            for date in dates:
+                next_date = min((d for d in dates if d > date), default=None)
+                prev_date = max((d for d in dates if d < date), default=None)
+                dates_rel.update({
+                    date: {
+                        'next_date': next_date,
+                        'prev_date': prev_date,
+                    },
+                })
+
+        context.update({
+            'months': months,
+        })
+
+    return render_template('select-calendar.html', **context)
+
 @jumpseat_request_bp.route('/', methods=['GET', 'POST'])
+@require_password_ok
+@login_required
 def landing_page():
     """
-    Logged in or anonymous user landing page for requesting a jumpeseat and
-    viewing their submitted requests.
+    Logged in user can request a jumpseat.
     """
+    context = {}
     request_by = current_user
 
     if 'randomfill' in request.args:
@@ -188,10 +233,16 @@ def landing_page():
             data = {}
         jumpseat_request_form = EditJumpseatRequestForm(data=data)
 
+    if 'fn_number' in request.args and 'dep_sched_dt' in request.args:
+        # fn_number is integer from lufthansa
+        selected_fn_number = int(request.args['fn_number'])
+        jumpseat_request_form.flight_number.data = selected_fn_number
+        selected_dep_sched_dt = datetime.fromisoformat(request.args['dep_sched_dt'])
+        jumpseat_request_form.flight_datetime.data = selected_dep_sched_dt
+        flash(f'Flight info filled from selected.', 'info')
+
     if jumpseat_request_form.validate_on_submit():
         email_address = jumpseat_request_form.employee_email.data
-        request_by = get_current_user_or_create_guest(email_address=email_address)
-        assert request_by is not None
         jumpseat_request = JumpseatRequest(
             request_by = request_by,
         )
@@ -215,10 +266,11 @@ def landing_page():
         # Redirect to ourself
         return redirect(url_for(request.endpoint))
 
-    context = {
+    context.update({
         'form': jumpseat_request_form,
         'request_by': request_by,
-    }
+        'calendar': calendar,
+    })
     context.update(settings.context())
 
     # query for current user's requests.
@@ -236,3 +288,23 @@ def landing_page():
         context['current_requests'] = current_requests
 
     return render_template('landing.html', **context)
+
+@jumpseat_request_bp.cli.command('query')
+@click.option('--month', type=int)
+def query(month):
+    """
+    Quick way to test query on command line.
+    """
+    query = newest_leg_scheduled_flights
+
+    if month is not None:
+        query = query.where(
+            db.func.extract('month', ranked_legs.c.day_of_origin) == month,
+        )
+
+    click.echo(query)
+
+    click.confirm('Continue?', default=True)
+
+    for leg in db.session.scalars(query):
+        click.echo(leg.__dict__)

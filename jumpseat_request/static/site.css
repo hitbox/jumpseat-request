@@ -28,6 +28,10 @@ body {
     align-items: center;
 }
 
+.header {
+    text-align: center;
+}
+
 main {
     margin-top: 1rem;
 }
@@ -130,6 +134,11 @@ li.flash {
     font-size: 1rem;
 }
 
+.field-error {
+    margin: 1rem 0;
+    padding: 4px 8px;
+}
+
 ul li {
     /* manually delete list-style from pico.css */
     list-style-type: none;
@@ -215,9 +224,20 @@ pre {
     white-space: nowrap;
 }
 
+.top-tab-bar {
+    /* align top navigation buttons to the bottom of their container */
+    align-items: flex-end;
+}
+
+/*
 .tab.current {
-    background: ForestGreen;
-    color: white;
+    background: var(--pico-primary);
+    border-bottom: 2px solid var(--pico-primary);
+}
+*/
+
+a[aria-current=page] {
+    font-weight: 600;
 }
 
 button.dynamic {
@@ -225,3 +245,17 @@ button.dynamic {
     max-width: 5rem;
 }
 
+.scheduled-flights-list-container {
+    max-height: 50vh;
+    overflow: scroll;
+}
+
+.scheduled-flights-list {
+    max-height: 30vh;
+    margin: 1rem;
+    overflow: scroll;
+}
+
+.scheduled-flight-item[aria-current=true] {
+    background: var(--pico-primary);
+}

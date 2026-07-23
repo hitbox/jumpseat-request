@@ -20,16 +20,6 @@ def seed_database():
     if not db.session.scalars(query).one_or_none():
         db.session.add(Provider(name='okta'))
 
-    airlines = [
-        ('GB', 'ABX'),
-        ('8C', 'ATN'),
-    ]
-    for iata_code, icao_code in airlines:
-        query = db.select(Airline).where(Airline.iata_code == iata_code)
-        exists = db.session.scalars(query).one_or_none()
-        if not exists:
-            db.session.add(Airline(iata_code=iata_code, icao_code=icao_code),)
-
     # Mirror announcement levels to database
     for member in AnnouncementLevelType:
         query = (

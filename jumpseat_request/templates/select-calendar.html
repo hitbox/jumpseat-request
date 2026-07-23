@@ -1,0 +1,71 @@
+{# Select a scheduled flight from a calendar view page #}
+{% extends "base.html" %}
+
+
+{% block content %}
+    <h3>Select Scheduled Flight from Calendar</h3>
+    <div class="grid-3">
+        {% for month in months %}
+        <div>
+            <a href="{{ url_for('jumpseat_request.select_calendar', month=month.number) }}">{{ month.name }}</a>
+            <table>
+                <caption>
+                    <h1>{{ month_name }}</h1>
+                </caption>
+                <thead>
+                    <tr>
+                        {#<th>Leg #</th>#}
+                        <th>Carrier</th>
+                        <th>Flight</th>
+                        <th>Sched. Dep.</th>
+                        <th>Orig.</th>
+                        <th>Dest.</th>
+                    </tr>
+                </thead>
+                {% for sched_date, legs in scheduled_flights|groupby('dep_sched_date') %}
+                <tbody>
+                    <tr>
+                        {% set id = 'day-' + sched_date.isoformat() %}
+                        <th id="{{ id }}" class="header" colspan="4">
+                            <nav>
+                                <ul>
+                                    {% if sched_date in dates_rel %}
+                                    {% set prev_date = dates_rel[sched_date].prev_date %}
+                                    {% if prev_date %}
+                                    <li><a href="#day-{{ prev_date.isoformat() }}">Previous</a></li>
+                                    {% endif %}
+                                    {% endif %}
+                                    <li><h3>{{ sched_date.strftime('%B') }} {{ ordinal(sched_date.day) }}</h3></li>
+                                    {% if sched_date in dates_rel %}
+                                    {% set next_date = dates_rel[sched_date].next_date %}
+                                    {% if next_date %}
+                                    <li><a href="#day-{{ next_date.isoformat() }}">Next</a></li>
+                                    {% endif %}
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </th>
+                    </tr>
+                    {% for leg in legs|sort(attribute='dep_sched_dt') %}
+                        {% set is_current = selected_fn_number is defined
+                            and selected_dep_sched_dt is defined
+                            and leg.fn_number == selected_fn_number
+                            and leg.dep_sched_dt == selected_dep_sched_dt %}
+                        {% set url = url_for('jumpseat_request.landing_page', fn_number=leg.fn_number, dep_sched_dt=leg.dep_sched_dt) %}
+                        <tr id="{{ id }}" data="{{ leg.__dict__ }}" data-href="{{ url }}"{% if is_current %} aria-current="true"{% endif %}>
+                            {#<td>{{ leg.leg_no }}</td>#}
+                            <td>{{ leg.fn_carrier }}</td>
+                            <td>{{ leg.fn_number }}</td>
+                            {# leg is an aliased object, not the one defined in the models #}
+                            <td>{{ leg.dep_sched_dt.strftime(config.JUMPSEAT_REQUEST_TIME_FORMAT) }}</td>
+                            <td>{{ leg.dep_ap_sched }}</td>
+                            <td>{{ leg.arr_ap_sched }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                {% endfor %}
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -18,12 +18,7 @@ class TimedToken:
         self.max_age = app.config.get('TOKEN_MAX_AGE')
         self.salt = app.config.get('TOKEN_SALT')
 
-    def create_token(self, email, user_id, jumpseat_request_id):
-        payload = {
-            'email': email,
-            'user_id': user_id,
-            'jumpseat_request_id': jumpseat_request_id,
-        }
+    def create_token(self, payload):
         token = self.serializer.dumps(payload, salt=self.salt)
         return token
 

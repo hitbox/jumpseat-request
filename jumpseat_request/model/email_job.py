@@ -2,10 +2,12 @@ from email.message import EmailMessage
 
 import uuid
 
-from flask import render_template
 from flask import current_app
+from flask import render_template
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.hybrid import hybrid_property
 
+from jumpseat_request import settings
 from jumpseat_request.extension import db
 from jumpseat_request.extension import smtp
 from jumpseat_request.extension import timezone
@@ -88,18 +90,24 @@ class EmailJob(db.Model, ModelMixin):
         comment = 'Datetime mark when background service began trying to send this email.',
     )
 
-    attempts = db.Column(
-        db.Integer,
-        default = 0,
-        comment = 'number of attempts to send email.'
-    )
-
     sent_at = db.Column(
         db.DateTime(timezone=True),
         nullable = True,
+        comment = 'Email successfully sent datetime.',
     )
 
-    last_error = db.Column(
+    @property
+    def sent_at_formatted(self):
+        if self.sent_at:
+            return self.sent_at.strftime(settings.datetime_format())
+
+    failed_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable = True,
+        comment = 'Last failure datetime to send email.',
+    )
+
+    failed_exception = db.Column(
         db.String,
         nullable = True,
     )
@@ -150,7 +158,7 @@ class EmailJob(db.Model, ModelMixin):
             db.select(cls)
             .where(
                 cls.sent_at.is_(None),
-                cls.sent_at.is_(None),
+                cls.failed_at.is_(None),
             )
             .with_for_update(skip_locked=True)
             .limit(1)
@@ -163,7 +171,6 @@ class EmailJob(db.Model, ModelMixin):
 
         current_app.logger.info('Got email job %s', email_job.id)
         email_job.processing_at = timezone.now()
-        email_job.attempts += 1
 
         try:
             message = email_job.to_python_email_message()
@@ -175,26 +182,34 @@ class EmailJob(db.Model, ModelMixin):
             # release job for retry
             email_job.processing_at = None
             current_app.logger.exception(
-                "EmailJob failed: %s", email_job.id
+                "EmailJob failed id: %s", email_job.id
             )
-            email_job.last_error = str(e)
+            email_job.failed_at = timezone.now()
+            email_job.failed_exception = str(e)
 
         finally:
             db.session.commit()
 
     @classmethod
-    def create_email_verification(cls, user, token):
+    def create_email_verification(
+        cls,
+        email_address,
+        token,
+        recipients,
+        body_text_template = 'email_verification.txt',
+        body_html_template = 'email_verification.html',
+    ):
         context = {
-            'user': user,
+            'email_address': email_address,
             'token': token,
         }
-        body_txt = render_template('email_verification.txt', **context)
-        body_html = render_template('email_verification.html', **context)
+        body_text = render_template(body_text_template, **context)
+        body_html = render_template(body_html_template, **context)
         inst = cls(
             subject = 'Verify Email',
             from_email_address = from_address(),
-            recipients = [user.email_address],
-            body_text = body_txt,
+            recipients = recipients,
+            body_text = body_text,
             body_html = body_html,
         )
         return inst

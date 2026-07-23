@@ -45,8 +45,16 @@ def datetime_format():
     Return the configured datetime format.
     """
     key = 'JUMPSEAT_REQUEST_DATETIME_FORMAT'
-    from_address = current_app.config[key]
-    return from_address
+    datetime_format = current_app.config[key]
+    return datetime_format
+
+def time_format():
+    """
+    Return the configured datetime format.
+    """
+    key = 'JUMPSEAT_REQUEST_TIME_FORMAT'
+    time_format = current_app.config[key]
+    return time_format
 
 def date_format():
     """
@@ -60,6 +68,10 @@ def default_endpoint():
     key = 'JUMPSEAT_REQUEST_DEFAULT_ENDPOINT'
     from_address = current_app.config.get(key, 'jumpseat_request.landing_page')
     return from_address
+
+def job_sleep_time():
+    sleep_time = current_app.config.get('SEND_EMAIL_SLEEP', 0.5)
+    return sleep_time
 
 def context():
     return {

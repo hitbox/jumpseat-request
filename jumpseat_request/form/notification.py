@@ -1,11 +1,13 @@
 from flask_wtf import FlaskForm
 from wtforms import FormField
 from wtforms import IntegerField
+from wtforms import SelectField
 from wtforms import StringField
 from wtforms import SubmitField
 from wtforms.validators import Optional
 
 from jumpseat_request.model import NotificationRecipient
+from jumpseat_request.signal import jumpseat_request_signals
 
 from .mixin import OrderedFieldsMixin
 from .field import DynamicFieldList
@@ -34,7 +36,10 @@ class EditNotificationRuleForm(FlaskForm):
 
     blurb = StringField()
 
-    signal_name = StringField()
+    signal_name = SelectField(
+        'Signal',
+        choices = list(jumpseat_request_signals),
+    )
 
     created_at_age_seconds = IntegerField(
         'Created Age Seconds',
@@ -46,7 +51,14 @@ class EditNotificationRuleForm(FlaskForm):
         },
     )
 
-    recipients = DynamicFieldList(FormField(NotificationRecipientSubform))
+    recipients = DynamicFieldList(
+        FormField(
+            NotificationRecipientSubform,
+        ),
+        render_kw = {
+            'data-tooltip': 'Hello!',
+        }
+    )
 
     update = SubmitField()
 

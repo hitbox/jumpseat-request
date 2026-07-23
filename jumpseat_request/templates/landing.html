@@ -1,50 +1,50 @@
 {% extends "base.html" %}
 
 
-{% from "macro.html" import render_form %}
-
-
 {% block content %}
-<h3>Request a jump seat</h3>
-{% if config.JUMPSEAT_DEVELOPMENT %}
-    {# link to autofill #}
-    <p><a href="{{ url_for(request.endpoint, randomfill=True, **request.view_args) }}">Random fill form.</a></p>
-{% endif %}
-<form method="POST">
-    {{ form.hidden_tag() }}
-    <fieldset>
-        <legend><strong>Flight</strong></legend>
-        {{ render_field(form.flight_date) }}
-        {{ render_field(form.flight_number) }}
-    </fieldset>
-    <fieldset>
-        <legend><strong>Employee Information</strong></legend>
-        {{ render_field(form.employee_airline) }}
-        {{ render_field(form.employee_number) }}
-        {{ render_field(form.employee_name) }}
-        {{ render_field(form.employee_email) }}
-        {{ render_field(form.employee_phone) }}
-    </fieldset>
-    {{ form.submit }}
-</form>
-{% if current_requests is defined and current_requests %}
-    <h4>Your Jumpseat Requests</h4>
-    <table>
-        <thead>
-            <tr>
-                <th>Flight</th>
-                <th>Date</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>{% for jumpseat_request in current_requests %}
+    <h3>Request a jump seat</h3>
+    <a href="{{ url_for('jumpseat_request.select_calendar') }}">Calendar Select</a>
+    {% if config.JUMPSEAT_DEVELOPMENT %}
+        {# link to autofill #}
+        {#
+        <p><a href="{{ url_for(request.endpoint, randomfill=True, **request.view_args) }}">Random fill form.</a></p>
+        #}
+    {% endif %}
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <fieldset>
+            <legend><strong>Flight</strong></legend>
+            {{ render_field(form.flight_number) }}
+            {{ render_field(form.flight_datetime) }}
+        </fieldset>
+        <fieldset>
+            <legend><strong>Employee Information</strong></legend>
+            {{ render_field(form.employee_airline) }}
+            {{ render_field(form.employee_number) }}
+            {{ render_field(form.employee_name) }}
+            {{ render_field(form.employee_email) }}
+            {{ render_field(form.employee_phone) }}
+        </fieldset>
+        {{ form.submit }}
+    </form>
+    {% if current_requests is defined and current_requests %}
+        <h4>Your Jumpseat Requests</h4>
+        <table>
+            <thead>
                 <tr>
-                    <td>{{ jumpseat_request.flight_number }}</td>
-                    <td>{{ jumpseat_request.flight_date.strftime(date_format) }}</td>
-                    <td>{{ jumpseat_request.status_html() }}{% if jumpseat_request.reason %}<div>{{ jumpseat_request.reason }}</div>{% endif %}</td>
-            </tr>{% endfor %}
-        </tbody>
-    </table>
-{% endif %}{# if current_requests is defined and truthy #}
+                    <th>Flight</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>{% for jumpseat_request in current_requests %}
+                    <tr>
+                        <td>{{ jumpseat_request.flight_number }}</td>
+                        <td>{{ jumpseat_request.flight_date.strftime(date_format) }}</td>
+                        <td>{{ jumpseat_request.status_html() }}{% if jumpseat_request.reason %}<div>{{ jumpseat_request.reason }}</div>{% endif %}</td>
+                </tr>{% endfor %}
+            </tbody>
+        </table>
+    {% endif %}{# if current_requests is defined and truthy #}
 
 {% endblock %}

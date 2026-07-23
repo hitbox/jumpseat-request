@@ -48,6 +48,10 @@ def login():
     }
     return render_template('login.html', **context)
 
+@auth_bp.route('/callback', methods=['GET', 'POST'])
+def callback():
+    pass
+
 @auth_bp.route('/change-password/<user_id>', methods=['GET', 'POST'])
 def change_password(user_id):
     """

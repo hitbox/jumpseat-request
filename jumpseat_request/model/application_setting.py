@@ -25,13 +25,22 @@ def get_base_settings_form():
         """
         update = SubmitField()
 
-        def populate_obj(self, obj):
+        def populate_obj(self, application_setting):
             # ignore object and update database rows
             for member in ApplicationSettingEnum:
                 field = getattr(self, member.name.lower(), None)
                 if field:
-                    setting = cls(name=member.name, value=field.data)
-                    db.session.add(setting)
+                    instance = db.session.get(ApplicationSetting, {'name': member.name})
+                    if instance:
+                        # Update existing setting
+                        instance.value = field.data
+                    else:
+                        # Add new setting
+                        instance = ApplicationSetting(
+                            name = member.name,
+                            value = field.data,
+                        )
+                        db.session.add(instance)
 
     return SettingsForm
 

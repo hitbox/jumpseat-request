@@ -85,7 +85,7 @@ class Announcement(db.Model, ModelMixin):
         text.append('to')
 
         if self.ends_at is None:
-            text.append('forever')
+            text.append('always')
         else:
             text.append(humanize.naturaltime(self.ends_at))
 

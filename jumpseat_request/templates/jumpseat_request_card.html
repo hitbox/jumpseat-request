@@ -4,7 +4,7 @@
         <div>{{ jumpseat_request.created_at_formatted }}</div>
         <h3>Flight Request</h3>
         <strong title="flight number">{{ jumpseat_request.flight_number }}</strong>
-        <strong title="flight Z date">{{ jumpseat_request.flight_date|format_date_as_configured }}</strong>
+        <strong title="flight Z date">{{ jumpseat_request.flight_datetime_formatted }}</strong>
     </header>
     <div>
         <strong>Status</strong>

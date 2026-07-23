@@ -20,8 +20,8 @@ def background_jobs(sleep_time):
     """
     Background service to send emails and escalate jumpseat requests.
     """
-    if not sleep_time:
-        sleep_time = current_app.config.get('SEND_EMAIL_SLEEP', 0.5)
+    if sleep_time is None:
+        sleep_time = settings.job_sleep_time()
     current_app.logger.info(f'Starting email sending service {smtp.smtp_args}')
     while True:
         # Send escalation signals.
@@ -30,18 +30,8 @@ def background_jobs(sleep_time):
         EmailJob.send_one_pending()
         time.sleep(sleep_time)
 
-@click.command('escalate-requests')
-def escalate_requests():
-    """
-    Create EmailJob objects for requests that need to escalate to configured
-    emails.
-    """
-    for jumpseat_requests in JumpseatRequest.needs_escalation(timezone.now()):
-        pass
-
 def init_app(app):
     """
     Add service commands to flask.
     """
     app.cli.add_command(background_jobs)
-    app.cli.add_command(escalate_requests)

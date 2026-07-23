@@ -1,18 +1,21 @@
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Optional
+
 from flask import Blueprint
 from flask import flash
 from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
+from flask.views import View
 from flask_login import current_user
+from flask_wtf import FlaskForm
 from markupsafe import Markup
 
 from htmlkit.lists import unordered_list
 from htmlkit.table import Column
 from htmlkit.table import Table
-from jumpseat_request.authenticate import login_and_password_ok
-from jumpseat_request.extension import db
-from jumpseat_request.extension import login_manager
 from jumpseat_request.form import EditAnnouncementForm
 from jumpseat_request.form import EditEmployeeForm
 from jumpseat_request.form import EditJumpseatRequestAdminForm
@@ -37,41 +40,48 @@ from jumpseat_request.model import NotificationRule
 from jumpseat_request.model import NotificationRule
 from jumpseat_request.model import Provider
 from jumpseat_request.model import User
+from jumpseat_request.model.admin_spec import AdminSpec
 from jumpseat_request.seed import seed_database
+from jumpseat_request.view.pluggable import EditObjectView
+from jumpseat_request.view.pluggable import ListView
+from jumpseat_request.view.pluggable import NewObjectView
 
 admin_specs_for_views = [
-    {
-        'model_class': Announcement,
-        'edit_form': EditAnnouncementForm,
-        'new_form': NewAnnouncementForm,
-        'html_table': Table(
-            description = NewAnnouncementForm.__doc__,
+    AdminSpec(
+        view_class = ListView,
+        pagination_getter = Announcement.pagination_getter,
+        model_class = Announcement,
+        edit_form = EditAnnouncementForm,
+        new_form = NewAnnouncementForm,
+        html_table = Table(
+            description = Announcement.__doc__,
             columns = [
-                Column(
-                    attrname = 'title',
-                    header = 'Title',
-                ),
                 Column(
                     attrname = 'is_active',
                     header = 'Active?',
-                    cast = lambda announcement, value: yesno(value),
                 ),
                 Column(
-                    attrname = 'human_datetime_range_html',
-                    header = 'Range',
+                    attrname = 'starts_at',
+                    header = 'Start',
                 ),
                 Column(
-                    attrname = 'message',
-                    header = 'Message',
+                    attrname = 'ends_at',
+                    header = 'End',
                 ),
+                Column(
+                    attrname = 'level',
+                    header = 'Level',
+               )
             ],
         ),
-    },
-    {
-        'model_class': User,
-        'edit_form': EditUserForm,
-        'new_form': NewUserForm,
-        'html_table': Table(
+    ),
+    AdminSpec(
+        view_class = ListView,
+        pagination_getter = User.pagination_getter,
+        model_class = User,
+        edit_form = EditUserForm,
+        new_form = NewUserForm,
+        html_table = Table(
             description = Markup(
                 '<p>User accounts.</p>'
                 '<p>If active they may login to the site.</p>'
@@ -116,12 +126,14 @@ admin_specs_for_views = [
                 ),
             ],
         )
-    },
-    {
-        'model_class': Employee,
-        'edit_form': EditEmployeeForm,
-        'new_form': NewEmployeeForm,
-        'html_table': Table([
+    ),
+    AdminSpec(
+        view_class = ListView,
+        pagination_getter = Employee.pagination_getter,
+        model_class = Employee,
+        edit_form = EditEmployeeForm,
+        new_form = NewEmployeeForm,
+        html_table = Table([
             Column(
                 attrname = 'name',
                 header = 'Name',
@@ -148,75 +160,19 @@ admin_specs_for_views = [
                 cast = lambda employee, user: user.email_address if user else '',
             ),
         ])
-    },
-    {
-        'model_class': JumpseatRequest,
-        'edit_form': EditJumpseatRequestAdminForm,
-        'new_form': NewJumpseatRequestForm,
-        'html_table': Table([
-            Column(
-                attrname = 'flight_date',
-                header = 'Flight Date',
-            ),
-            Column(
-                attrname = 'flight_number',
-                header = 'Flight #',
-            ),
-            Column(
-                attrname = 'employee_airline.icao_code',
-                header = 'Flight #',
-            ),
-            Column(
-                attrname = 'employee_number',
-                header = 'Empl. #',
-            ),
-            Column(
-                attrname = 'employee_name',
-                header = 'Name',
-            ),
-            Column(
-                attrname = 'request_by.email_address',
-                header = 'Requester Email',
-            ),
-            Column(
-                attrname = 'status_html',
-                header = 'Status',
-            ),
-        ]),
-    },
-    {
-        'model_class': NotificationRule,
-        'edit_form': EditNotificationRuleForm,
-        'html_table': Table(
-            description = "A notification groups email address recipients to a notification event. This table exists to allow admins to edit the recipients list. Adding a new signal requires developer effort to make the signal and code to process it.",
-            columns = [
-                Column(
-                    attrname = 'name',
-                    header = 'Name',
-                ),
-                Column(
-                    attrname = 'blurb',
-                    header = 'Blurb',
-                ),
-                Column(
-                    attrname = 'signal_name',
-                    header = 'Signal Name',
-                ),
-                Column(
-                    attrname = 'created_at_age_seconds',
-                    header = 'Created At Seconds',
-                    cast = lambda notification_rule, seconds: f'{seconds:,}' if seconds else '',
-                ),
-                Column(
-                    attrname = 'recipients',
-                    cast = lambda parent, recipient_list: unordered_list(map(lambda obj: obj.email_address, recipient_list))
-                ),
-            ],
-        ),
-    },
-    {
-        'model_class': JumpseatRequestNotificationRuleAssoc,
-        'html_table': Table(
+    ),
+    AdminSpec(
+        view_class = ListView,
+        model_class = NotificationRule,
+        pagination_getter = NotificationRule.pagination_getter,
+        edit_form = EditNotificationRuleForm,
+        html_table = None,
+     ),
+    AdminSpec(
+        view_class = ListView,
+        pagination_getter = NotificationRule.pagination_getter,
+        model_class = JumpseatRequestNotificationRuleAssoc,
+        html_table = Table(
             description = JumpseatRequestNotificationRuleAssoc.__doc__,
             columns = [
                 Column(
@@ -230,22 +186,27 @@ admin_specs_for_views = [
                 ),
             ],
         ),
-    },
-    {
-        'model_class': ApplicationSetting,
-        'edit_form': ApplicationSetting.get_settings_form,
-        'edit_rule': '/application-setting/<name>',
+    ),
+    AdminSpec(
+        view_class = ListView,
+        model_class = ApplicationSetting,
+        pagination_getter = ApplicationSetting.pagination_getter,
+        edit_view_class = EditObjectView,
+        edit_endpoint = lambda instance: url_for('application_setting_edit', id=instance.id),
+        edit_form = ApplicationSetting.get_settings_form,
+        edit_rule = '/application-setting/<name>',
+        after_endpoint = 'application_setting_list',
         # special way to populate these forms:
-        'edit_kwargs_for_form': lambda: { 'data': ApplicationSetting.as_data() },
-        'pkname': 'name',
-        'html_table': Table([
-            Column(
-                attrname = 'name',
-            ),
-            Column(
-                attrname = 'value',
-            ),
-        ]),
-    },
+        edit_kwargs_for_form = lambda: { 'data': ApplicationSetting.as_data() },
+        html_table = Table(
+            columns = [
+                Column(
+                    attrname = 'name',
+                ),
+                Column(
+                    attrname = 'value',
+                ),
+            ],
+        ),
+    ),
 ]
-

@@ -77,3 +77,11 @@ class ModelMixin:
     def name_for_template(cls):
         default = cls.__tablename__.title().replace('_', ' ')
         return getattr(cls, '__name_for_template__', default)
+
+    @classmethod
+    def pagination_getter(cls):
+        query = (
+            db.select(cls)
+            .order_by(cls.created_at.desc())
+        )
+        return db.paginate(query)

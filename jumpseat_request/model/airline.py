@@ -1,15 +1,9 @@
 import uuid
 
-from argon2 import PasswordHasher
-from argon2 import exceptions as password_exceptions
-from flask_login import UserMixin
-
 from jumpseat_request.extension import db
 from jumpseat_request.settings import airline_label_attribute
 
 from .mixin import ModelMixin
-
-password_hasher = PasswordHasher()
 
 class Airline(db.Model, ModelMixin):
     """

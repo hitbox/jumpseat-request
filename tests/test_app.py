@@ -7,9 +7,8 @@ from psycopg import sql
 
 from jumpseat_request.app import create_app
 from jumpseat_request.extension import db as _db
+from jumpseat_request.model import Airline
 from jumpseat_request.model import User
-from jumpseat_request.model.user import UserState
-from jumpseat_request.model.user import UserStateType
 from jumpseat_request.seed import seed_database
 
 @pytest.fixture
@@ -19,19 +18,32 @@ def app():
     app = create_app()
     yield app
 
+def add_airlines():
+    airlines = [
+        ('GB', 'ABX'),
+        ('8C', 'ATN'),
+    ]
+    for iata_code, icao_code in airlines:
+        _db.session.add(Airline(
+            iata_code = iata_code,
+            icao_code = icao_code,
+        ))
+
 @pytest.fixture
 def db(app):
     with app.app_context():
         # delete all tables
         _db.create_all()
         seed_database()
+        add_airlines()
+        _db.session.commit()
         yield _db
         _db.session.rollback()
         _db.drop_all()
 
 @pytest.fixture
 def users(db):
-    users = {
+    users_data = {
         'admin': User(
             email_address = 'admin@company.com',
             password_hash = 'password',
@@ -47,7 +59,8 @@ def users(db):
             reset_password = True,
         ),
     }
-    for user in users.values():
+
+    for user in users_data.values():
         db.session.add(user)
     db.session.commit()
-    return users
+    return users_data

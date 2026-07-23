@@ -1,22 +1,14 @@
 import uuid
 
-from enum import Enum
-
 from argon2 import exceptions as password_exceptions
-from flask import current_app
-from flask import session as flask_session
-from flask_login import AnonymousUserMixin
 from flask_login import UserMixin
-from flask_login import current_user
-from markupsafe import Markup
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from jumpseat_request import settings
 from jumpseat_request.extension import db
-from jumpseat_request.extension import login_manager
 from jumpseat_request.extension import timezone
 from jumpseat_request.frontend import yesno
 from jumpseat_request.password import password_hasher
-from jumpseat_request.secret import six_digit_code
 
 from .mixin import ModelMixin
 
@@ -24,13 +16,6 @@ class User(db.Model, UserMixin, ModelMixin):
     """
     User account.
     """
-
-    __html_column_order__ = [
-        'email_address',
-        'is_active',
-        'is_admin',
-        'employee',
-    ]
 
     id = db.Column(
         db.UUID(as_uuid=True),
@@ -45,25 +30,39 @@ class User(db.Model, UserMixin, ModelMixin):
         db.String,
         unique = True,
         nullable = False,
+        info = {
+            'blurb': 'Email address',
+        }
     )
 
     @db.validates('email_address')
-    def clear_verified(self, key, value):
+    def normalize_email_address(self, key, value):
         """
-        Clear email verified if changed.
+        Clear email verified if changed and normalize email
+        address to lower-case.
         """
-        if self.email_address and self.email_address != value:
-            self.email_verified_at = None
-        return value
+        return value.lower()
 
     email_verified_at = db.Column(
         db.DateTime(timezone=True),
         comment = 'The datetime the email address was verified',
+        info = {
+            'blurb': 'Datetime a secret token was verified from the inbox of the email.',
+        }
     )
+
+    @property
+    def email_verified_at_formatted(self):
+        if self.email_verified_at:
+            return self.email_verified_at.strftime(settings.datetime_format())
 
     @hybrid_property
     def email_verified(self):
         return self.email_verified_at is not None
+
+    @email_verified.setter
+    def email_verified(self, value):
+        self.email_verified_at = timezone.now()
 
     @email_verified.expression
     def email_verified(cls):
@@ -157,6 +156,7 @@ class User(db.Model, UserMixin, ModelMixin):
 
     is_guest = db.Column(
         db.Boolean,
+        default = False,
         nullable = False,
     )
 
@@ -170,6 +170,12 @@ class User(db.Model, UserMixin, ModelMixin):
 
     @classmethod
     def by_email(cls, email):
+        """
+        Case-insensitive lookup user object by email address.
+        """
+        if isinstance(email, str):
+            email = email.lower()
+
         query = db.select(cls).where(cls.email_address == email)
         return db.session.scalars(query).one_or_none()
 

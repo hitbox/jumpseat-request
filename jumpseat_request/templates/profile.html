@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% from "macro.html" import render_form %}
+
+
+{% block content %}
+<h3 class="header">Profile</h3>
+<nav>
+    <ul>
+        <li>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+        </li>
+    </ul>
+</nav>
+
+<pre>{{ current_user.verified_at }}</pre>
+
+{% if current_user.email_verified_at %}
+<p>
+    <strong>Email verified</strong>
+    <p>{{ current_user.email_verified_at_formatted }}</p>
+</p>
+{% else %}
+    {% if current_user.email_address %}
+        <p>
+            <a href="{{ url_for('user.send_email_verification', email_address=current_user.email_address) }}">Click to send email verification link to {{ current_user.email_address }}</a>
+        </p>
+    {% endif %}
+{% endif %}
+
+<h3>Edit account info</h3>
+<form method="POST">
+    {{ render_form(edit_account_form) }}
+</form>
+{% endblock %}

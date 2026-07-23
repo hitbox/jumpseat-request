@@ -7,12 +7,31 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from flask.views import View
-from markupsafe import Markup
 
-from jumpseat_request.authenticate import login_and_password_ok
 from jumpseat_request.extension import db
+class SingleView(View):
+    """
+    View a single object in dedicated page.
+    """
 
-from htmlkit.lists import unordered_list
+    def __init__(
+        self,
+        template,
+        model_class,
+    ):
+        self.template = template
+        self.model_class = model_class
+
+    def dispatch_request(self, **ident):
+        instance = db.session.get(self.model_class, ident)
+        if instance is None:
+            abort(404, description=f'Instance not found {ident}')
+
+        context = {
+            'model_class': self.model_class,
+            'instance': instance,
+        }
+        return render_template(self.template, **context)
 
 class ListView(View):
     """
@@ -72,7 +91,7 @@ class NewObjectView(View):
         self.after_endpoint = after_endpoint
 
     def dispatch_request(self):
-        form = self.form_class(request.form)
+        form = self.form_class()
 
         if form.validate_on_submit():
             instance = self.model_class()
@@ -109,8 +128,8 @@ class EditObjectView(View):
         self.kwargs_for_form = kwargs_for_form
         self.after_endpoint = after_endpoint
 
-    def dispatch_request(self, **kwargs):
-        instance = db.session.get(self.model_class, kwargs)
+    def dispatch_request(self, **ident):
+        instance = db.session.get(self.model_class, ident)
 
         if instance is None:
             abort(404, description=f'Instance not found {kwargs}')

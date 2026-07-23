@@ -1,8 +1,6 @@
 {% extends "admin/base.html" %}
 
 
-{% from "macro.html" import render_form %}
-
 
 {% block content %}
     {{ super() }}
@@ -19,11 +17,11 @@
         <p>No objects</p>
     {% else %}
         {% if pagination_doc is defined and pagination_doc %}<small>{{ pagination_doc }}</small>{% endif %}
-        <table>
+        <table class="striped">
             <thead>
                 <tr>{% for column in table.columns %}
                     {% set header = column.header or column.attrname %}
-                    <th>{{ header }}</th>
+                    <th{% if column.th_attrs %} {% for key, value in column.th_attrs|items %}{{ key }}="{{ value }}"{% endfor %}{% endif %}>{{ header }}</th>
                 {% endfor %}</tr>
             </thead>
             <tbody>{% for obj in pagination %}
@@ -38,9 +36,4 @@
             </tbody>
         </table>
     {% endif %}{# if pagination #}
-    {% if form is defined %}
-        <form>
-            {{ render_form(form) }}
-        </form>
-    {% endif %}
 {% endblock %}

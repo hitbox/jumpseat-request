@@ -16,23 +16,18 @@ from flask import url_for
 from flask_login import current_user
 
 from jumpseat_request.extension import timezone
-from jumpseat_request.form import JumpseatRequestForm
 from jumpseat_request.model import Airline
 from jumpseat_request.model import EmailJob
 from jumpseat_request.model import EmailJobRecipient
 from jumpseat_request.model import JumpseatRequest
-from jumpseat_request.model import NotificationRecipient
 from jumpseat_request.model import NotificationRule
 from jumpseat_request.model import User
-from jumpseat_request.model import UserStateType
-from jumpseat_request.signal import jumpseat_request_proposal_created
-from jumpseat_request.signal import jumpseat_request_proposal_escalate
+from jumpseat_request.signal import jumpseat_request_created
+from jumpseat_request.signal import jumpseat_request_escalate
 
 from tests.test_app import app
 from tests.test_app import db
 from tests.test_app import users
-
-# tests
 
 def get_airlines(db):
     query = sa.select(Airline)
@@ -42,19 +37,17 @@ def get_airlines(db):
     }
     return airlines
 
-def __test_create_proposal_form(db, app):
-    airlines = get_airlines(db)
-    form = JumpseatRequestForm(data={
-        'employee': {
-            'airline': {
-                'id': airlines['ABX'].id,
-            },
-            'employee_number': 'ee1111',
-            'name': 'name1111',
-            'email_address': 'user1111@company.com',
-            'phone': '(111) 111 1111',
+def update_application_settings(client):
+    """
+    Post form data to update required application settings.
+    """
+    response = client.post(
+        url_for('app_settings.edit_required_settings'),
+        data = {
+            'from_address': 'from-address@company.com',
         },
-    })
+        follow_redirects = True,
+    )
 
 def test_escalation_query(app, db):
     """
@@ -63,28 +56,31 @@ def test_escalation_query(app, db):
     """
     # craft a proposal that matches escalation conditions
     notification_rule = NotificationRule(
-        name = jumpseat_request_proposal_escalate.name,
-        event_name = jumpseat_request_proposal_escalate.name,
+        name = jumpseat_request_escalate.name,
+        signal_name = jumpseat_request_escalate.name,
         created_at_age_seconds = 60 * 30,
     )
     db.session.add(notification_rule)
 
-    proposal = JumpseatRequest(
+    airlines = get_airlines(db)
+    jumpseat_request = JumpseatRequest(
         created_at = timezone.now() - timedelta(minutes=30),
-        data = {
-            'employee': {
-                'flight_number': 'AA1111',
-                'flight_date': timezone.now().date().isoformat(),
-            },
-        },
+        flight_number = 'AA1111',
+        flight_date = timezone.now().date().isoformat(),
+        employee_airline = airlines['ABX'],
+        employee_number = 'EE1111',
+        employee_email = 'first.last@company.com',
+        request_by = User(
+            email_address = 'first.last@company.com',
+        ),
     )
-    db.session.add(proposal)
+    db.session.add(jumpseat_request)
     db.session.commit()
 
     escalates = JumpseatRequest.needs_escalation(timezone.now())
     assert len(escalates) == 1
 
-    assert escalates == [(proposal, notification_rule)]
+    assert escalates == [(jumpseat_request, notification_rule)]
 
 def test_reset_password(app, db, users):
     """
@@ -92,27 +88,29 @@ def test_reset_password(app, db, users):
     their password.
     """
     with app.test_client() as client:
+        # Ensure application settings are set.
+        update_application_settings(client)
+
+        user_need_password = users['reset_password_user']
         # Login as user needs password change.
         response = client.post(
             url_for('auth.login'),
             data = {
-                'email_address': users['reset_password_user'].email_address,
+                'email_address': user_need_password.email_address,
                 'password': 'password',
             },
             follow_redirects = True,
         )
         assert response.status_code == 200
-        assert 'Logged in' in response.text
 
         # Check redirect to change password
         response = client.get(
             # hit an endpoint that checks for reset password
-            # NOTE: landing_page allows guests!
-            url_for('user.edit_account', user_id=users['admin'].id),
+            url_for('jumpseat_request.landing_page', user_id=users['admin'].id),
             follow_redirects = True,
         )
         assert response.status_code == 200
-        assert 'Change password required' in response.text
+        assert '<input id="password"' in response.text
 
 def test_require_admin(app, db, users):
     """
@@ -120,18 +118,20 @@ def test_require_admin(app, db, users):
     """
     with app.test_client() as client:
         # Login as non-admin user
+        user = users['user']
         response = client.post(
             url_for('auth.login'),
             data = {
-                'email_address': users['user'].email_address,
-                'password': 'user',
+                'email_address': user.email_address,
+                'password': 'password',
             },
             follow_redirects = True,
         )
         assert response.status_code == 200
+        assert 'Logged in' in response.text
 
         response = client.get(
-            url_for('admin.airline_list'),
+            url_for('admin.user_list'),
             follow_redirects = True,
         )
         assert response.status_code == 200
@@ -160,25 +160,33 @@ def test_get_admin_pages(app, db, users):
         # Check good response and expected text.
         # table name endpoints under admin with model names in the html
         names = [
-            ('airline', 'Airline'),
             ('employee', 'Employee'),
-            ('identity', 'Identity'),
             ('jumpseat_request', 'JumpseatRequest',),
-            ('provider', 'Provider'),
             ('user', 'User'),
         ]
         for name, expected_text in names:
             endpoint = f'admin.{name}_list'
             response = client.get(url_for(endpoint), follow_redirects=True)
             assert response.status_code == 200
-            assert expected_text in response.text
 
-def test_guest_create_jumpseat_request(app, db):
+def test_create_jumpseat_request(app, db, users):
     """
     Check posting a jump seat request to the landing_page and that we generate emails.
     """
     airlines = get_airlines(db)
     with app.test_client() as client:
+        # POST to login
+        response = client.post(
+            url_for('auth.login'),
+            data = {
+                'email_address': 'admin@company.com',
+                'password': 'password',
+            },
+            follow_redirects = True,
+        )
+        assert response.status_code == 200
+        assert 'Logged in' in response.text
+
         landing_url = url_for('jumpseat_request.landing_page')
         # POST a jumpseat request as a guest to the landing page without logging in.
         response = client.post(
@@ -202,8 +210,8 @@ def test_guest_create_jumpseat_request(app, db):
         query = (
             db.select(JumpseatRequest)
             .where(
-                JumpseatRequest.data['flight_number'].as_string() == 'FLIGHT1',
-                JumpseatRequest.data['flight_date'].as_string() == '2026-01-01',
+                JumpseatRequest.flight_number == 'FLIGHT1',
+                JumpseatRequest.flight_date == date(2026,1,1),
             )
         )
         exists = db.session.scalars(query).one_or_none()

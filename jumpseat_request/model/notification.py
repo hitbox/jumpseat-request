@@ -3,10 +3,12 @@ import uuid
 from argon2 import PasswordHasher
 from argon2 import exceptions as password_exceptions
 from flask_login import UserMixin
+from markupsafe import Markup
 from sqlalchemy.ext.associationproxy import association_proxy
 
 from jumpseat_request.extension import db
 from jumpseat_request.signal import jumpseat_request_signals
+from jumpseat_request.english import english_list
 
 from .mixin import ModelMixin
 
@@ -41,6 +43,9 @@ class NotificationRule(db.Model, ModelMixin):
         db.String,
         nullable = False,
         comment = 'Blinker signal name.',
+        info = {
+            'blurb': f'One of {english_list(jumpseat_request_signals.keys(), conjunction='or')} built-in application values.'
+        },
     )
 
     @db.validates('signal_name')

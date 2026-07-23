@@ -8,110 +8,87 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
+from flask_login import current_user
 from flask_login import logout_user
 from markupsafe import Markup
 
-from jumpseat_request.authenticate import login_and_password_ok
 from jumpseat_request.extension import db
 from jumpseat_request.form import EditAccountForm
 from jumpseat_request.form import RegisterUserForm
+from jumpseat_request.form import VerifyEmailForm
 from jumpseat_request.form import form_obj_diff
-from jumpseat_request.guest import get_current_user_or_create_guest
+from jumpseat_request.guard import login_and_password_ok
 from jumpseat_request.model import User
+from jumpseat_request.signal import account_creation_requested
 
 from htmlkit.lists import definition_list
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
-@user_bp.route('/edit-account/<user_id>', methods=['GET', 'POST'])
+@user_bp.route('/profile', methods=['GET', 'POST'])
 @login_and_password_ok
-def edit_account(user_id):
+def profile():
     """
-    Current logged in user edit their account info.
+    current_user profile page
     """
-    user = db.session.get(User, {'id': user_id})
-    if not user:
-        abort(404, 'User not found')
+    edit_account_form = EditAccountForm(obj=current_user)
 
-    form = EditAccountForm(obj=user)
-
-    if form.validate_on_submit():
-        changes = form_obj_diff(form, user)
-        if changes:
-            changes = {key: f'{from_} -> {to}' for key, (from_, to) in changes.items()}
-            flash(Markup('<p>Account changed</p>') + definition_list(changes, class_='table'), 'success')
-        form.populate_obj(user)
+    if edit_account_form.validate_on_submit():
+        edit_account_form.populate_obj(current_user)
         db.session.commit()
-        if user.email_verified_at is None:
-            flash('Account email changed. Send verification again?')
-            # Redirect to send verification
-            send_verify_url = url_for(
-                'email_verification.send_verification',
-                user_id=user_id
-            )
-            return redirect(send_verify_url)
+        flash('Profile updated', 'info')
+        return redirect(url_for(request.endpoint))
 
     context = {
-        'user': user,
-        'form': form,
+        'edit_account_form': edit_account_form,
     }
-
-    return render_template('form.html', **context)
+    return render_template('profile.html', **context)
 
 @user_bp.route('/new-account', methods=['GET', 'POST'])
-@click.option('--is-guest', is_flag=True, default=False)
-def create_account(is_guest):
+def create_account():
     """
     Allow user to create account.
     """
-    form = RegisterUserForm()
+    form = VerifyEmailForm()
 
     if form.validate_on_submit():
-        new_user = User(
-            email_address = form.employee.email_address.data,
-            is_guest = is_guest,
-        )
+        email_address = form.email_address.data
+        exists = User.by_email(email_address)
+        if exists:
+            url = url_for(
+                '.send_email_verification',
+                email_address=email_address,
+                next = url_for(request.endpoint),
+            )
+            flash(
+                Markup(
+                    f'<p class="warning message">Email address {email_address} already exists.</p>'
+                    f'<a href="{url}">Click to send another verfication link.</a>'
+                ),
+                'warning',
+            )
+        else:
+            account_creation_requested.send(
+                create_account,
+                email_address = form.email_address.data,
+            )
+            flash('You should receive a verification link in your inbox soon', 'info')
 
     context = {
         'form': form,
     }
-    return render_template('form.html', **context)
+    return render_template('create_account.html', **context)
 
-@user_bp.route('/register/<guest_token>', methods=['POST', 'GET'])
-def register_new_user(guest_token):
-    """
-    Allow user to create an account.
-    """
-    # Get guest data from session
-    guest = get_current_user_or_create_guest()
-    register_form = RegisterUserForm(
-        email_address = guest.email_address,
+@user_bp.route('/send-verification/<email_address>')
+def send_email_verification(email_address):
+    account_creation_requested.send(
+        create_account,
+        email_address = email_address,
     )
+    flash('You should receive a verification link in your inbox soon', 'info')
 
-    if request.method == 'POST':
-        if register_form.validate():
-            new_user = User(
-                email_address = register_form.email_address.data
-            )
-            db.session.add(new_user)
-            raise NotImplementedError('Insert email verification here')
-            db.session.add(verify)
-            db.session.commit()
-            # redirect to form to verify secret
-            url = url_for(
-                'email_verification.verify_email',
-                user_id=new_user.id,
-            )
-            response = redirect(url)
-            current_app.logger.debug('confirm hash: %s', code)
-            flash('New user and verification code created', 'info')
-            return response
-
-    context = {
-        'register_form': register_form,
-    }
-
-    return render_template('register.html', **context)
+    url = request.args.get('next', url_for('.create_account'))
+    return redirect(url)
 
 user_bp.cli.help = 'Administrate user accounts'
 
