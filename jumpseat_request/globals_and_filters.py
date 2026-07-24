@@ -121,6 +121,13 @@ def nav_links():
             })
     else:
         links.append({
+            'url': url_for('auth.login'),
+            'text': 'Login',
+            'current_for': set([
+                'auth.login',
+            ]),
+        })
+        links.append({
             'url': url_for('user.create_account'),
             'text': 'Create account',
             'current_for': set([

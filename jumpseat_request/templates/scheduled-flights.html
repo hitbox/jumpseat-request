@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+
+{% from "macro.html" import render_scheduled_flights_table %}
+
+
+{% block content %}
+    <a href="{{ url_for('jumpseat_request.select_calendar') }}">Calendar Select</a>
+
+    <nav class="dates">
+        <ul>{% for date in datenav %}
+                <li>
+                    <a href="{{ url_for('jumpseat_request.selected_date_calendar', date=date) }}"{% if date == request.view_args.date %} aria-current="page"{% endif %}>{{ date.strftime(config.JUMPSEAT_REQUEST_DATE_FORMAT) }}</a></li>
+            {%endfor %}</ul>
+    </nav>
+
+    <h3 class="header">{{ request.view_args.date.strftime(config.JUMPSEAT_REQUEST_DATE_FORMAT) }}</h3>
+    {{ render_scheduled_flights_table(month_name, scheduled_flights) }}
+{% endblock %}

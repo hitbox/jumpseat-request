@@ -59,7 +59,6 @@ class ModelMixin:
     @classmethod
     def query_factory(cls):
         # QuerySelectField support mixin.
-        # Confusingly it wants the instances *not* the query/select.
         return db.session.scalars(db.select(cls)).all()
 
     @classmethod

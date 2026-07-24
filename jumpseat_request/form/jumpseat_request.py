@@ -31,6 +31,7 @@ def flight_datetime_field(label=None):
     return DateTimeField(
         label = label,
         default = lambda: timezone.now().date(),
+        format = '%Y-%m-%d %H:%M',
         validators = [
             DataRequired(),
         ],

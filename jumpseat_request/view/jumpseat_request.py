@@ -5,6 +5,10 @@ import uuid
 
 from datetime import date
 from datetime import datetime
+from datetime import timedelta
+from itertools import groupby
+from operator import attrgetter
+from operator import itemgetter
 
 import click
 
@@ -23,6 +27,7 @@ from markupsafe import Markup
 
 from jumpseat_request import settings
 from jumpseat_request import signal
+from jumpseat_request.calendar import build_calendar
 from jumpseat_request.extension import db
 from jumpseat_request.extension import login_manager
 from jumpseat_request.extension import timezone
@@ -36,10 +41,13 @@ from jumpseat_request.model import Airline
 from jumpseat_request.model import JumpseatRequest
 from jumpseat_request.model import Leg
 from jumpseat_request.model import User
-from jumpseat_request.query import ranked_legs
+from jumpseat_request.query import LegRanked
+from jumpseat_request.query import counts_by_date
 from jumpseat_request.query import newest_leg_scheduled_flights
+from jumpseat_request.query import ranked_legs
 
 jumpseat_request_bp = Blueprint('jumpseat_request', __name__, url_prefix='/jumpseat')
+
 
 def action_forms_by_id(jumpseats):
     """
@@ -168,51 +176,61 @@ def get_data_for_current_user():
         })
     return data
 
+def ensure_date(value):
+    if isinstance(value, datetime):
+        value = value.date()
+    return value
+
 @jumpseat_request_bp.route('/select-calendar')
 def select_calendar():
+    today = timezone.today()
+
+    months = build_calendar(today.year, today=today)
+
+    end_of_year = date(today.year + 1, 1, 1)
+
+    start_of_year = date(today.year, 1, 1)
+
+    counts_by_date = (
+        db.select(
+            db.func.trunc(ranked_legs.c.dep_sched_dt).label('date'),
+            db.func.count().label('count'),
+        )
+        .where(
+            ranked_legs.c.rownumber == 1,
+            ranked_legs.c.dep_sched_dt >= start_of_year,
+            ranked_legs.c.dep_sched_dt < end_of_year,
+        )
+        .group_by(
+            db.func.trunc(ranked_legs.c.dep_sched_dt),
+        )
+        .order_by(
+            db.func.trunc(ranked_legs.c.dep_sched_dt),
+        )
+    )
+
+    has_dates = {ensure_date(row.date): row.count for row in db.session.execute(counts_by_date)}
+
     context = {
-        'calendar': calendar,
-        'current_month': timezone.today().month,
+        'today': timezone.today(),
+        'months': months,
+        'has_dates': has_dates,
     }
 
     selected_month = int(request.args.get('month', '0'))
 
-    months = []
-    for month_num in range(1, 13):
-        month = {
-            'name': calendar.month_name[month_num],
-            'number': month_num,
-        }
-
-        if selected_month > 0:
-            query = newest_leg_scheduled_flights
-            query = query.where(
-                db.func.extract('month', ranked_legs.c.dep_sched_dt) == month_num,
-                ranked_legs.c.fn_carrier == 'GB',
-            )
-            scheduled_flights = db.session.scalars(query).all()
-
-            month.update({
-                'scheduled_flights': scheduled_flights,
-            })
-
-            dates = set([leg.dep_sched_date for leg in scheduled_flights])
-            dates_rel = {}
-            for date in dates:
-                next_date = min((d for d in dates if d > date), default=None)
-                prev_date = max((d for d in dates if d < date), default=None)
-                dates_rel.update({
-                    date: {
-                        'next_date': next_date,
-                        'prev_date': prev_date,
-                    },
-                })
-
-        context.update({
-            'months': months,
-        })
-
     return render_template('select-calendar.html', **context)
+
+@jumpseat_request_bp.route('/select-calendar/<date:date>')
+def selected_date_calendar(date):
+
+    datenav = [date + timedelta(days=days) for days in range(-3, 4)]
+    context = {
+        'scheduled_flights': Leg.all_for_date(date),
+        'month_name': calendar.month_name[date.month],
+        'datenav': datenav,
+    }
+    return render_template('scheduled-flights.html', **context)
 
 @jumpseat_request_bp.route('/', methods=['GET', 'POST'])
 @require_password_ok
@@ -269,7 +287,6 @@ def landing_page():
     context.update({
         'form': jumpseat_request_form,
         'request_by': request_by,
-        'calendar': calendar,
     })
     context.update(settings.context())
 

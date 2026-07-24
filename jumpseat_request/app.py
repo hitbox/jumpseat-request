@@ -12,9 +12,10 @@ from wtforms import StringField
 from wtforms import SubmitField
 from wtforms.validators import DataRequired
 
+from . import converter
 from . import extension
-from . import tasks
 from . import globals_and_filters
+from . import tasks
 from . import view
 from .extension import db
 from .extension import timezone
@@ -30,6 +31,7 @@ def create_app():
     PrefixMiddleware.init_app(app)
 
     extension.init_app(app)
+    converter.init_app(app)
     globals_and_filters.init_app(app)
     tasks.init_app(app)
     view.init_app(app)

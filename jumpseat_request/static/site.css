@@ -259,3 +259,22 @@ button.dynamic {
 .scheduled-flight-item[aria-current=true] {
     background: var(--pico-primary);
 }
+
+.month-year.grid {
+    /* grid of months for a year */
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.month-year.grid .cell {
+    /* links and weekday cells */
+    white-space: nowrap;
+}
+
+.month-days.grid {
+    /* grid of days of a month */
+    grid-template-columns: repeat(7, 1fr);
+}
+
+nav.dates {
+    justify-content: center;
+}

@@ -4,10 +4,13 @@ flask
 flask-login
 flask-sqlalchemy
 flask-wtf
+git+https://github.com/hitbox/flask-okta.git
 humanize
 marshmallow
+oracledb
 psycopg
 pytest-flask
+requests # flask_okta
 sqlalchemy
 wtforms
 wtforms-sqlalchemy

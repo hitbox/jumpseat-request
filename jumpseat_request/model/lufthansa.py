@@ -1,5 +1,23 @@
+from datetime import datetime
+from datetime import timedelta
+
 from jumpseat_request import settings
 from jumpseat_request.extension import db
+
+from sqlalchemy.ext.hybrid import Comparator
+from sqlalchemy.ext.hybrid import hybrid_property
+
+
+class DateComparator(Comparator):
+    def __eq__(self, other):
+        start = datetime.combine(other, datetime.min.time())
+        end = start + timedelta(days=1)
+
+        return and_(
+            self.__clause_element__() >= start,
+            self.__clause_element__() < end,
+        )
+
 
 class Leg(db.Model):
     """
@@ -55,6 +73,20 @@ class Leg(db.Model):
         index = True,
     )
 
+    @hybrid_property
+    def dep_sched_date(self):
+        if self.dep_sched_dt:
+            return self.dep_sched_dt.date()
+
+    @dep_sched_date.expression
+    def dep_sched_date(cls):
+        return db.func.trunc(cls.dep_sched_dt)
+
+    @dep_sched_date.comparator
+    def dep_sched_date(cls):
+        return DateComparator(cls.dep_sched_dt)
+
+
     dep_ap_sched = db.Column(
         db.String(3),
         nullable = False,
@@ -102,3 +134,21 @@ class Leg(db.Model):
     def dep_sched_time_formatted(self):
         if self.dep_sched_dt:
             return self.dep_sched_dt.strtime(settings.time_format())
+
+    @classmethod
+    def all_for_date(cls, date):
+        """
+        List of all Leg objects for given date.
+        """
+        from jumpseat_request.query import LegRanked
+        from jumpseat_request.query import newest_leg_scheduled_flights
+        from jumpseat_request.query import ranked_legs
+
+        query = (
+            db.select(LegRanked)
+            .where(
+                ranked_legs.c.rownumber == 1,
+                db.func.trunc(ranked_legs.c.dep_sched_dt) == date,
+            )
+        )
+        return db.session.scalars(query).all()

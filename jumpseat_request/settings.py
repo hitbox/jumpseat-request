@@ -73,6 +73,16 @@ def job_sleep_time():
     sleep_time = current_app.config.get('SEND_EMAIL_SLEEP', 0.5)
     return sleep_time
 
+def scheduled_flight_carrier():
+    key = 'JUMPSEAT_REQUEST_SCHEDULED_FLIGHT_CARRIER'
+    carrier_code = current_app.config.get(key)
+    return carrier_code
+
+def firstweekday():
+    key = 'JUMPSEAT_REQUEST_FIRSTWEEKDAY'
+    firstweekday = current_app.config.get(key)
+    return firstweekday
+
 def context():
     return {
         'airline_label_attribute': airline_label_attribute(),
