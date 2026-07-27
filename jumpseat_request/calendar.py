@@ -10,7 +10,10 @@ def build_calendar(year, today=None):
     """
     Build calendar data structure for a year for templates.
     """
-    cal = calendar.Calendar(firstweekday=settings.firstweekday())
+    firstweekday = settings.firstweekday()
+    if firstweekday is None:
+        raise ValueError(f'JUMPSEAT_REQUEST_FIRSTWEEKDAY must be configured.')
+    cal = calendar.Calendar(firstweekday=firstweekday)
     data = []
     for month in range(1, 13):
         dates = []

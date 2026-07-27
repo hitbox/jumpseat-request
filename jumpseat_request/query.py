@@ -1,6 +1,9 @@
+from jumpseat_request.db_compat import trunc_date
 from jumpseat_request.extension import db
 from jumpseat_request.model import Leg
 
+# subquery to eliminate leg_no causing very many duplicates (since we only care
+# about flight number, datetime, and carrier).
 ranked_legs = (
     db.select(
         Leg,
@@ -8,7 +11,7 @@ ranked_legs = (
             partition_by = (
                 Leg.fn_carrier,
                 Leg.fn_number,
-                db.func.trunc(Leg.dep_sched_dt).label('dep_sched_date'),
+                trunc_date(Leg.dep_sched_dt).label('dep_sched_date'),
             ),
             order_by = Leg.leg_no.desc(),
         )

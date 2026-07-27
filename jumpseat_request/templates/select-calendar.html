@@ -6,11 +6,14 @@
 
 {% block content %}
     <h3>Select Scheduled Flight from Calendar</h3>
+    <p>Click a day to get a table listing of scheduled flights for that day.</p>
+    <p>Shown under the day number are the total number of scheduled flights for that day.</p>
+    <p>Only today onward are shown for {{ scheduled_flight_carrier.icao_code }} carrier.</p>
     {#<pre>{{ has_dates }}</pre>#}
     <div class="month-year grid">{% for month in months %}
         <div>
             {#<pre>{{ month }}</pre>}#}
-            <h3>{{ month.name }}</h3>
+            <h3 class="header">{{ month.name }}</h3>
             <div class="month-days grid">
                 {% if month.weekdays %}{% for weekday in month.weekdays %}
                     <div class="cell weekday">{{ weekday }}</div>
@@ -19,11 +22,13 @@
                 <div>{% if date.date.month == month.number %}
                     {% set url = url_for('jumpseat_request.selected_date_calendar', date=date.date) %}
                     {% set is_current_page = date.date == request.view_args.date %}
-                    {% set flights_count = has_dates[date.date] %}
                     <div>
                         <a class="cell" href="{{ url }}"{% if is_current_page  %} aria-current="page"{% endif %}>{{ date.day }}</a>
                     </div>
-                    <div>{{ flights_count }}</div>
+                    {% set flights_count = has_dates[date.date] %}
+                    {% if flights_count %}
+                    <div class="scheduled-flight-count">({{ flights_count }})</div>
+                    {% endif %}
                 {% endif %}</div>
             {% endfor %}</div>
         </div>

@@ -1,7 +1,6 @@
 import uuid
 
 from jumpseat_request.extension import db
-from jumpseat_request.settings import airline_label_attribute
 
 from .mixin import ModelMixin
 
@@ -45,5 +44,14 @@ class Airline(db.Model, ModelMixin):
 
     @property
     def configured_display_code(self):
+        from jumpseat_request.settings import airline_label_attribute
         attr = airline_label_attribute()
         return getattr(self, attr)
+
+    @classmethod
+    def by_iata(cls, iata_code):
+        return db.session.scalars(db.select(cls).where(cls.iata_code == iata_code)).one()
+
+    @classmethod
+    def by_icao(cls, icao_code):
+        return db.session.scalars(db.select(cls).where(cls.icao_code == icao_code)).one()

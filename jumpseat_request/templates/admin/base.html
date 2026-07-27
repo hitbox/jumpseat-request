@@ -9,7 +9,7 @@
         <ul>{% for link in links %}
             <li>
                 {% set url = url_for(link.endpoint) %}
-                {{ render_link_with_current(url, link.name, link.current_for) }}
+                {{ render_link_with_current(url, link.name, link.current_for, tooltip=link.tooltip) }}
             </li>
         {% endfor %}</ul>
     </nav>

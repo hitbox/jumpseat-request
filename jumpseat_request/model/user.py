@@ -154,12 +154,6 @@ class User(db.Model, UserMixin, ModelMixin):
         }
     )
 
-    is_guest = db.Column(
-        db.Boolean,
-        default = False,
-        nullable = False,
-    )
-
     def verify_email_html(self):
         html = [
             f'<a href="">Send verification email.</a>'

@@ -111,6 +111,7 @@ def nav_links():
             'current_for': set([
                 'user.profile' # FIXME: make any sense for logout?
             ]),
+            'tooltip': 'Login/logout and edit account',
         })
         if current_user.is_admin:
             # Admin page
@@ -126,6 +127,7 @@ def nav_links():
             'current_for': set([
                 'auth.login',
             ]),
+            'tooltip': 'Login as existing user',
         })
         links.append({
             'url': url_for('user.create_account'),
@@ -137,7 +139,7 @@ def nav_links():
 
     return links
 
-def render_link_with_current(url, text, current_for=None, current_prefix=None):
+def render_link_with_current(url, text, current_for=None, current_prefix=None, tooltip=None):
     if current_for is None:
         current_for = set()
     attributes = {}
@@ -146,6 +148,9 @@ def render_link_with_current(url, text, current_for=None, current_prefix=None):
 
     elif current_prefix is not None and request.endpoint.startswith(current_prefix):
         attributes['aria-current'] = 'page'
+
+    if tooltip:
+        attributes['data-tooltip'] = tooltip
 
     return Markup(f'<a {render_attrs(**attributes)} href="{url}">{ text }</a>')
 

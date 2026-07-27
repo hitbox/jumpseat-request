@@ -220,6 +220,10 @@ pre {
     white-space: pre-wrap;
 }
 
+.nowrap {
+    white-space: nowrap;
+}
+
 .contact-value {
     white-space: nowrap;
 }
@@ -277,4 +281,8 @@ button.dynamic {
 
 nav.dates {
     justify-content: center;
+}
+
+.scheduled-flight-count {
+    background: var(--pico-secondary-background);
 }

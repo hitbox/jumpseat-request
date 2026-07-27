@@ -1,11 +1,12 @@
 from datetime import datetime
 from datetime import timedelta
 
-from jumpseat_request import settings
-from jumpseat_request.extension import db
-
 from sqlalchemy.ext.hybrid import Comparator
 from sqlalchemy.ext.hybrid import hybrid_property
+
+from jumpseat_request import settings
+from jumpseat_request.db_compat import trunc_date
+from jumpseat_request.extension import db
 
 
 class DateComparator(Comparator):
@@ -80,7 +81,7 @@ class Leg(db.Model):
 
     @dep_sched_date.expression
     def dep_sched_date(cls):
-        return db.func.trunc(cls.dep_sched_dt)
+        return trunc_date(cls.dep_sched_dt)
 
     @dep_sched_date.comparator
     def dep_sched_date(cls):
@@ -143,12 +144,15 @@ class Leg(db.Model):
         from jumpseat_request.query import LegRanked
         from jumpseat_request.query import newest_leg_scheduled_flights
         from jumpseat_request.query import ranked_legs
+        from jumpseat_request.settings import scheduled_flight_carrier
 
+        scheduled_flight_carrier = scheduled_flight_carrier()
         query = (
             db.select(LegRanked)
             .where(
                 ranked_legs.c.rownumber == 1,
-                db.func.trunc(ranked_legs.c.dep_sched_dt) == date,
+                trunc_date(ranked_legs.c.dep_sched_dt) == date,
+                ranked_legs.c.fn_carrier == scheduled_flight_carrier.iata_code,
             )
         )
         return db.session.scalars(query).all()

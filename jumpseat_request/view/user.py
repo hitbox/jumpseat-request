@@ -14,9 +14,7 @@ from markupsafe import Markup
 
 from jumpseat_request.extension import db
 from jumpseat_request.form import EditAccountForm
-from jumpseat_request.form import RegisterUserForm
 from jumpseat_request.form import VerifyEmailForm
-from jumpseat_request.form import form_obj_diff
 from jumpseat_request.guard import login_and_password_ok
 from jumpseat_request.model import User
 from jumpseat_request.signal import account_creation_requested
@@ -124,11 +122,10 @@ def delete_user(email_address):
 @click.option('--email', required=True)
 @click.password_option('--password', required=True)
 @click.option('--is-admin', is_flag=True)
-@click.option('--is-guest', is_flag=True)
 @click.option('--is-decider', is_flag=True)
 @click.option('--disabled', is_flag=True, help='Create user as disabled')
 @click.option('--is-verified', is_flag=True, help='Mark user\'s email address as verified.')
-def create_user(email, password, is_admin, is_guest, is_decider, disabled, is_verified):
+def create_user(email, password, is_admin, is_decider, disabled, is_verified):
     """
     Create a new user account for application.
     """
@@ -138,7 +135,6 @@ def create_user(email, password, is_admin, is_guest, is_decider, disabled, is_ve
         is_admin = is_admin,
         is_active = not disabled,
         is_decider = is_decider,
-        is_guest = is_guest,
     )
     if is_verified:
         user.confirm_email()

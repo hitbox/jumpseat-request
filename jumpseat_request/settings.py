@@ -1,6 +1,7 @@
 from flask import current_app
 
 
+
 class AirlineLabelGetter:
 
     def __init__(self, config_key='JUMPSEAT_REQUEST_SHOW_AIRLINE_CODE', default='icao_code'):
@@ -74,9 +75,10 @@ def job_sleep_time():
     return sleep_time
 
 def scheduled_flight_carrier():
-    key = 'JUMPSEAT_REQUEST_SCHEDULED_FLIGHT_CARRIER'
-    carrier_code = current_app.config.get(key)
-    return carrier_code
+    from jumpseat_request.model import Airline
+    key = 'JUMPSEAT_REQUEST_SCHEDULED_FLIGHT_CARRIER_IATA'
+    iata_code = current_app.config.get(key)
+    return Airline.by_iata(iata_code)
 
 def firstweekday():
     key = 'JUMPSEAT_REQUEST_FIRSTWEEKDAY'

@@ -28,6 +28,7 @@ from markupsafe import Markup
 from jumpseat_request import settings
 from jumpseat_request import signal
 from jumpseat_request.calendar import build_calendar
+from jumpseat_request.db_compat import trunc_date
 from jumpseat_request.extension import db
 from jumpseat_request.extension import login_manager
 from jumpseat_request.extension import timezone
@@ -183,38 +184,43 @@ def ensure_date(value):
 
 @jumpseat_request_bp.route('/select-calendar')
 def select_calendar():
+    """
+    Yearly calendar to select date for scheduled flights.
+    """
     today = timezone.today()
 
     months = build_calendar(today.year, today=today)
 
-    end_of_year = date(today.year + 1, 1, 1)
-
-    start_of_year = date(today.year, 1, 1)
-
+    scheduled_flight_carrier = settings.scheduled_flight_carrier()
     counts_by_date = (
         db.select(
-            db.func.trunc(ranked_legs.c.dep_sched_dt).label('date'),
+            trunc_date(ranked_legs.c.dep_sched_dt).label('date'),
             db.func.count().label('count'),
         )
         .where(
             ranked_legs.c.rownumber == 1,
-            ranked_legs.c.dep_sched_dt >= start_of_year,
-            ranked_legs.c.dep_sched_dt < end_of_year,
+            ranked_legs.c.dep_sched_dt >= today,
+            ranked_legs.c.fn_carrier == scheduled_flight_carrier.iata_code,
         )
         .group_by(
-            db.func.trunc(ranked_legs.c.dep_sched_dt),
+            trunc_date(ranked_legs.c.dep_sched_dt),
         )
         .order_by(
-            db.func.trunc(ranked_legs.c.dep_sched_dt),
+            trunc_date(ranked_legs.c.dep_sched_dt),
         )
     )
 
-    has_dates = {ensure_date(row.date): row.count for row in db.session.execute(counts_by_date)}
+    # mapping dates -> count of scheduled flights
+    has_dates = {
+        ensure_date(row.date): row.count
+        for row in db.session.execute(counts_by_date)
+    }
 
     context = {
         'today': timezone.today(),
         'months': months,
         'has_dates': has_dates,
+        'scheduled_flight_carrier': scheduled_flight_carrier,
     }
 
     selected_month = int(request.args.get('month', '0'))
@@ -240,8 +246,6 @@ def landing_page():
     Logged in user can request a jumpseat.
     """
     context = {}
-    request_by = current_user
-
     if 'randomfill' in request.args:
         jumpseat_request_form = EditJumpseatRequestForm(data=get_data_for_random_autofill())
     else:
@@ -262,7 +266,7 @@ def landing_page():
     if jumpseat_request_form.validate_on_submit():
         email_address = jumpseat_request_form.employee_email.data
         jumpseat_request = JumpseatRequest(
-            request_by = request_by,
+            request_by = current_user,
         )
         db.session.add(jumpseat_request)
         jumpseat_request_form.populate_obj(jumpseat_request)
@@ -286,23 +290,24 @@ def landing_page():
 
     context.update({
         'form': jumpseat_request_form,
-        'request_by': request_by,
+        'request_by': current_user,
     })
     context.update(settings.context())
 
     # query for current user's requests.
-    if isinstance(request_by, User):
-        jumpseat_request_query = (
-            db.select(JumpseatRequest)
-            .where(
-                JumpseatRequest.request_by == request_by
-            )
+    jumpseat_request_query = (
+        db.select(JumpseatRequest)
+        .where(
+            JumpseatRequest.request_by == current_user
         )
+    )
 
-        # Create list of jumpseat requests by the current user or guest.
-        current_requests = db.session.scalars(jumpseat_request_query).all()
+    # Create list of jumpseat requests by the current user or guest.
+    current_requests = db.session.scalars(jumpseat_request_query).all()
 
-        context['current_requests'] = current_requests
+    context.update({
+        'current_requests': current_requests,
+    })
 
     return render_template('landing.html', **context)
 

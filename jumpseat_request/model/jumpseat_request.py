@@ -12,7 +12,6 @@ from jumpseat_request.extension import db
 from jumpseat_request.extension import timezone
 from jumpseat_request.signal import jumpseat_request_decided
 from jumpseat_request.signal import jumpseat_request_escalate
-from jumpseat_request.signal import jumpseat_request_escalate
 
 from .mixin import ModelMixin
 from .user import User
@@ -138,11 +137,19 @@ class JumpseatRequest(db.Model, ModelMixin):
 
     @hybrid_property
     def is_decided(self):
-        return (~self.approved_at and ~self.denied_at)
+        """
+        Jumpseat request has had a decision if either approved- or denied-at
+        datetimes are present.
+        """
+        return (self.approved_at is not None or self.denied_at is not None)
 
     @is_decided.expression
     def is_decided(cls):
-        return db.not_(db.and_(cls.approved_at.is_(None), cls.denied_at.is_(None)))
+        """
+        Jumpseat request has had a decision if either approved- or denied-at
+        datetimes are present.
+        """
+        return db.and_(cls.approved_at.is_(None), cls.denied_at.is_(None))
 
     @classmethod
     def escalate_as_needed(cls, now):

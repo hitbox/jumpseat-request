@@ -77,9 +77,6 @@ def employee_field(**kwargs):
     return QuerySelectField(**kwargs)
 
 def confirm_password_field(**kwargs):
-    # Must have a "password_hash" field on the form.
-    kwargs.setdefault('label', None)
-    kwargs.setdefault('validators', )
     return PasswordField(**kwargs)
 
 
@@ -106,8 +103,6 @@ class EditUserForm(FlaskForm):
 
     # Employee associated with methods of contacts.
     is_decider = is_decider_field()
-
-    is_admin = is_admin_field()
 
     password_hash = PasswordField(
         label = 'Password',
@@ -154,21 +149,13 @@ class EditAccountForm(OrderedFieldsMixin, FlaskForm):
 
     def populate_obj(self, user):
         super().populate_obj(user)
-        user.verified_at = None
+        user.email_verified_at = None
 
 
 class NewUserForm(FlaskForm):
     """
     Admin form to create a new user.
     """
-
-    __fields__ = [
-        'email_address',
-        'employee',
-        'is_admin',
-        'is_active',
-        'is_decider',
-    ]
 
     email_address = email_address_field(
         validators = [
@@ -183,8 +170,6 @@ class NewUserForm(FlaskForm):
     is_decider = is_decider_field()
 
     is_admin = is_admin_field()
-
-    is_decider = is_decider_field()
 
     employee = employee_field()
 

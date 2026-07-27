@@ -105,15 +105,16 @@ def inject():
     """
     return {
         'links': [
-            {
-                'endpoint': 'admin.announcement_list',
-                'current_for': set([
-                    'admin.announcement_list',
-                    'admin.announcement_edit',
-                    'admin.announcement_new',
-                ]),
-                'name': 'Announcement',
-            },
+            #{
+            #    'endpoint': 'admin.announcement_list',
+            #    'current_for': set([
+            #        'admin.announcement_list',
+            #        'admin.announcement_edit',
+            #        'admin.announcement_new',
+            #    ]),
+            #    'name': 'Announcement',
+            #    'tooltip': Announcement.__doc__,
+            #},
             {
                 'endpoint': 'admin.user_list',
                 'current_for': set([
@@ -122,6 +123,7 @@ def inject():
                     'admin.user_new',
                 ]),
                 'name': 'User',
+                'tooltip': User.__doc__,
             },
             {
                 'endpoint': 'admin.employee_list',
@@ -131,6 +133,7 @@ def inject():
                     'admin.employee_new',
                 ]),
                 'name': 'Employee',
+                'tooltip': Employee.__doc__,
             },
             {
                 'endpoint': 'admin.jumpseat_request_list',
@@ -140,6 +143,7 @@ def inject():
                     'admin.jumpseat_request_new',
                 ]),
                 'name': 'Jumpseat Request',
+                'tooltip': JumpseatRequest.__doc__,
             },
             {
                 'endpoint': 'admin.notification_rule_list',
@@ -149,6 +153,7 @@ def inject():
                     'admin.notification_rule_new',
                 ]),
                 'name': 'Notification Rule',
+                'tooltip': NotificationRule.__doc__,
             },
             {
                 'endpoint': 'admin.email_job_list',
@@ -157,6 +162,7 @@ def inject():
                     'admin.email_job_edit',
                 ]),
                 'name': 'Email',
+                'tooltip': EmailJob.__doc__,
             },
         ],
     }
@@ -249,15 +255,15 @@ admin_bp.add_url_rule(
                 Column(
                     attrname = 'email_address',
                     header = 'Email Address',
-                    cast = many_formatter,
+                    cast = lambda user, email_address: nowrap(email_address),
                     th_attrs = {
                         'data-tooltip': User.email_address.info.get('blurb'),
                     },
                 ),
                 Column(
-                    attrname = 'email_verified_at',
+                    attrname = 'email_verified_at_formatted',
                     header = 'Email Verified',
-                    cast = many_formatter,
+                    cast = lambda user, email_verified_at_formatted: nowrap(email_verified_at_formatted),
                     th_attrs = {
                         'data-tooltip': User.email_verified_at.info.get('blurb'),
                     },
@@ -398,8 +404,8 @@ admin_bp.add_url_rule(
             description = JumpseatRequest.__doc__,
             columns = [
                 Column(
-                    attrname = 'flight_date',
-                    header = 'Flight Date',
+                    attrname = 'flight_datetime',
+                    header = 'Flight DateTime',
                     ),
                 Column(
                     attrname = 'flight_number',
@@ -452,6 +458,9 @@ admin_bp.add_url_rule(
     ),
 )
 
+def nowrap(string):
+    return Markup(f'<span class="nowrap">{ string }</span>')
+
 admin_bp.add_url_rule(
     rule = '/notification-rule',
     view_func = ListView.as_view(
@@ -461,11 +470,12 @@ admin_bp.add_url_rule(
         pagination_getter = NotificationRule.pagination_getter,
         edit_endpoint = lambda obj: url_for('.notification_rule_edit', id=obj.id),
         table = Table(
-            description = Markup("<p>A notification groups email address recipients to a notification event. This table exists to allow admins to edit the recipients list. Adding a new signal requires developer effort to make the signal and code to process it.</p>"),
+            description = Markup("<p>A NotificationRule object groups email address recipients to a notification event. This table exists to allow admins to edit the recipients list. Adding a new signal requires developer effort to make the signal and code to process it.</p>"),
             columns = [
                 Column(
                     attrname = 'name',
                     header = 'Name',
+                    cast = lambda parent, name: nowrap(name),
                 ),
                 Column(
                     attrname = 'blurb',
@@ -473,6 +483,7 @@ admin_bp.add_url_rule(
                 ),
                 Column(
                     attrname = 'signal_name',
+                    cast = lambda parent, name: nowrap(name),
                     header = 'Signal Name',
                     th_attrs = {
                         'data-tooltip': NotificationRule.signal_name.info.get('blurb'),
@@ -492,7 +503,7 @@ admin_bp.add_url_rule(
                     th_attrs = {
                         'data-tooltip': 'List of recipients for notificaiton rule.',
                     },
-                    cast = lambda parent, recipient_list: unordered_list(map(lambda obj: obj.email_address, recipient_list))
+                    cast = lambda parent, recipient_list: unordered_list(map(lambda obj: nowrap(obj.email_address), recipient_list))
                 ),
             ],
          ),
