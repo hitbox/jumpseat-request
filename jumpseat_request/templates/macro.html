@@ -62,9 +62,11 @@
                 {% if form.errors %}<pre>{{ form.erros }}</pre>{% endif %}
                 <fieldset>
                     {{ render_field(form.reason) }}
+                    {% if form.approve and form.deny %}
                     <div role="group">
                         {{ form.approve }}{{ form.deny }}
                     </div>
+                    {% endif %}
                 </fieldset>
             </form>
         </div>

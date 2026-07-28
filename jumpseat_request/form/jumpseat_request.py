@@ -194,6 +194,14 @@ class JumpseatRequestActionForm(FlaskForm):
         }
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'obj' in kwargs:
+            jumpseat_request = kwargs['obj']
+        if jumpseat_request and not jumpseat_request.is_undecided():
+            del self.approve
+            del self.deny
+
     def populate_obj(form, jumpseat_request):
         """
         Update JumpseatRequest object calling special methods for approving and

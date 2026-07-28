@@ -8,6 +8,7 @@ from flask import session as flask_session
 from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
+from markupsafe import Markup
 from wtforms import StringField
 from wtforms import SubmitField
 from wtforms.validators import DataRequired
@@ -22,6 +23,8 @@ from .extension import timezone
 from .middleware import PrefixMiddleware
 from .model import Announcement
 from .model import ApplicationSetting
+from .model import NotificationRule
+from .signal import jumpseat_request_signals
 
 def create_app():
     app = Flask(__name__)
@@ -39,6 +42,9 @@ def create_app():
     nice_handle_exception = app.config.get('NICE_HANDLE_EXCEPTIONS', False)
 
     if nice_handle_exception:
+        """
+        Nice consistent styling for errors.
+        """
         @app.errorhandler(Exception)
         def handle_exception(e):
             return render_template('exception.html', e=e)
@@ -51,6 +57,7 @@ def create_app():
         return redirect(url_for('jumpseat_request.landing_page'))
 
     if app.config.get('JUMPSEAT_DEVELOPMENT'):
+        # Add flash messages preview for development.
         @app.route('/messages')
         def messsages():
             flash('Info', 'info')
@@ -59,6 +66,20 @@ def create_app():
             flash('Success', 'success')
             flash('Multiple\nlines\nin one message', 'info')
             return render_template('base.html')
+
+    def flash_for_notification_rules():
+        for signal_name in jumpseat_request_signals:
+            query = (
+                db.select(NotificationRule)
+                .where(NotificationRule.signal_name == signal_name)
+            )
+            exists = db.session.scalars(query).all()
+            if not exists:
+                message = Markup(
+                    f'<p>Admin intervention required.</p>'
+                    f'<p class="danger">Missing NotificationRule for {signal_name=}.</p>'
+                )
+                flash(message)
 
     @app.before_request
     def init_app_settings():
@@ -75,6 +96,8 @@ def create_app():
                 request.endpoint.startswith('auth.')
             )):
             return
+
+        #flash_for_notification_rules()
 
         # Allow the view that handles missing settings to go through for
         # missing settings.

@@ -6,13 +6,15 @@
         <meta charset="utf-8">
     </head>
     <body>
-        <h3>{{ jumpseat_request.title_string(verb) }}</h3>
+        <h1>{{ jumpseat_request.title_string(verb) }}</h1>
         {% if has_decider_recipient %}
             {# give the recipient a link to decide request if any are user.is_decider #}
             <p>
                 <a href="{{ url_for('jumpseat_request.decide_jumpseat_request', request_id=jumpseat_request.id, _external=True) }}">Click to approve or deny request</a>
             </p>
         {% endif %}
+        <strong>Request By</strong>
+        <p>{{ jumpseat_request.request_by.email_address }}</p>
         {% if comment is defined and comment %}<p>{{ comment }}</p>{% endif %}
         <strong>Request ID</strong>
         {% if admin_in_recipients %}

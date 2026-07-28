@@ -43,12 +43,13 @@ from jumpseat_request.model import JumpseatRequest
 from jumpseat_request.model import Leg
 from jumpseat_request.model import User
 from jumpseat_request.query import LegRanked
+from jumpseat_request.query import counts_after_date
 from jumpseat_request.query import counts_by_date
 from jumpseat_request.query import newest_leg_scheduled_flights
 from jumpseat_request.query import ranked_legs
+from jumpseat_request.settings import scheduled_flight_carrier
 
 jumpseat_request_bp = Blueprint('jumpseat_request', __name__, url_prefix='/jumpseat')
-
 
 def action_forms_by_id(jumpseats):
     """
@@ -72,9 +73,14 @@ def decide_jumpseat_request(request_id):
         abort(404, description='Request not found')
 
     if not jumpseat_request.is_undecided():
-        abort(404, description=f'Jumpseat request status {jumpseat_request.status()}')
+        abort(404, description=f'Jumpseat request already decided: status {jumpseat_request.status()}')
 
     form = JumpseatRequestActionForm(obj=jumpseat_request)
+    if not jumpseat_request.is_undecided():
+        del form.approve
+        del form.deny
+        flash(f'Request already decided. {jumpseat_request.status()}')
+
     if form.validate_on_submit():
         form.populate_obj(jumpseat_request)
         db.session.commit()
@@ -105,14 +111,14 @@ def list_jumpseat_requests(request_id):
     if not current_user.is_decider:
         abort(
             403,
-            description = f'Logged in account {current_user.email_address} does'
-                ' not have permission to decide requests.'
+            description = f'Logged in account does'
+                ' not have permission to decide requests (is_decider flag).'
         )
 
     query = (
         db.select(JumpseatRequest)
         .where(
-            ~JumpseatRequest.is_decided,
+            db.not_(JumpseatRequest.is_decided),
         )
         .order_by(
             JumpseatRequest.created_at.desc(),
@@ -191,36 +197,19 @@ def select_calendar():
 
     months = build_calendar(today.year, today=today)
 
-    scheduled_flight_carrier = settings.scheduled_flight_carrier()
-    counts_by_date = (
-        db.select(
-            trunc_date(ranked_legs.c.dep_sched_dt).label('date'),
-            db.func.count().label('count'),
-        )
-        .where(
-            ranked_legs.c.rownumber == 1,
-            ranked_legs.c.dep_sched_dt >= today,
-            ranked_legs.c.fn_carrier == scheduled_flight_carrier.iata_code,
-        )
-        .group_by(
-            trunc_date(ranked_legs.c.dep_sched_dt),
-        )
-        .order_by(
-            trunc_date(ranked_legs.c.dep_sched_dt),
-        )
-    )
+    query = counts_after_date(today)
 
     # mapping dates -> count of scheduled flights
-    has_dates = {
+    counts_for_date = {
         ensure_date(row.date): row.count
-        for row in db.session.execute(counts_by_date)
+        for row in db.session.execute(query)
     }
 
     context = {
         'today': timezone.today(),
         'months': months,
-        'has_dates': has_dates,
-        'scheduled_flight_carrier': scheduled_flight_carrier,
+        'counts_for_date': counts_for_date,
+        'scheduled_flight_carrier': scheduled_flight_carrier(),
     }
 
     selected_month = int(request.args.get('month', '0'))
@@ -229,7 +218,10 @@ def select_calendar():
 
 @jumpseat_request_bp.route('/select-calendar/<date:date>')
 def selected_date_calendar(date):
-
+    """
+    Table listing scheduled flights for a date. Table row links to go to
+    jumpseat request page with flight info filled in.
+    """
     datenav = [date + timedelta(days=days) for days in range(-3, 4)]
     context = {
         'scheduled_flights': Leg.all_for_date(date),

@@ -16,10 +16,6 @@ jumpseat_request_decided = jumpseat_request_signals.signal('jumpseat-request-dec
 
 account_creation_requested = jumpseat_request_signals.signal('create-account-request')
 
-email_verified = jumpseat_request_signals.signal('email-verified')
-
-account_created_by_user = jumpseat_request_signals.signal('account-created-by-user')
-
 text_body_template = 'request_event.txt'
 html_body_template = 'request_event.html'
 

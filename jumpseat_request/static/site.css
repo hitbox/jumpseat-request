@@ -269,8 +269,15 @@ button.dynamic {
     grid-template-columns: repeat(3, 1fr);
 }
 
-.month-year.grid .cell {
+.cell {
     /* links and weekday cells */
+    white-space: nowrap;
+    text-align: center;
+    grid-gap: 4rem;
+}
+
+.cell.has-flights {
+    background: var(--pico-secondary-background);
     white-space: nowrap;
 }
 
@@ -285,4 +292,5 @@ nav.dates {
 
 .scheduled-flight-count {
     background: var(--pico-secondary-background);
+    white-space: nowrap;
 }

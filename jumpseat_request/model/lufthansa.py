@@ -141,18 +141,6 @@ class Leg(db.Model):
         """
         List of all Leg objects for given date.
         """
-        from jumpseat_request.query import LegRanked
-        from jumpseat_request.query import newest_leg_scheduled_flights
-        from jumpseat_request.query import ranked_legs
-        from jumpseat_request.settings import scheduled_flight_carrier
-
-        scheduled_flight_carrier = scheduled_flight_carrier()
-        query = (
-            db.select(LegRanked)
-            .where(
-                ranked_legs.c.rownumber == 1,
-                trunc_date(ranked_legs.c.dep_sched_dt) == date,
-                ranked_legs.c.fn_carrier == scheduled_flight_carrier.iata_code,
-            )
-        )
+        from jumpseat_request.query import all_for_date_query
+        query = all_for_date_query(date)
         return db.session.scalars(query).all()

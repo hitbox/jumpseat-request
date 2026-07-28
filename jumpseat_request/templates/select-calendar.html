@@ -9,9 +9,9 @@
     <p>Click a day to get a table listing of scheduled flights for that day.</p>
     <p>Shown under the day number are the total number of scheduled flights for that day.</p>
     <p>Only today onward are shown for {{ scheduled_flight_carrier.icao_code }} carrier.</p>
-    {#<pre>{{ has_dates }}</pre>#}
+    {#<pre>{{ counts_for_date }}</pre>#}
     <div class="month-year grid">{% for month in months %}
-        <div>
+        <div class="month">
             {#<pre>{{ month }}</pre>}#}
             <h3 class="header">{{ month.name }}</h3>
             <div class="month-days grid">
@@ -19,17 +19,17 @@
                     <div class="cell weekday">{{ weekday }}</div>
                 {% endfor %}{% endif %}
                 {% for date in month.dates %}
-                <div>{% if date.date.month == month.number %}
-                    {% set url = url_for('jumpseat_request.selected_date_calendar', date=date.date) %}
-                    {% set is_current_page = date.date == request.view_args.date %}
-                    <div>
-                        <a class="cell" href="{{ url }}"{% if is_current_page  %} aria-current="page"{% endif %}>{{ date.day }}</a>
-                    </div>
-                    {% set flights_count = has_dates[date.date] %}
-                    {% if flights_count %}
-                    <div class="scheduled-flight-count">({{ flights_count }})</div>
+                    {% if date.date.month == month.number %}
+                        {% set url = url_for('jumpseat_request.selected_date_calendar', date=date.date) %}
+                        {% set is_current_page = date.date == request.view_args.date %}
+                        {% set flights_count = counts_for_date[date.date] %}
+                        <a class="cell{% if flights_count %} has-flights{% endif %}" href="{{ url }}"{% if is_current_page  %} aria-current="page"{% endif %}{% if flights_count %} data-tooltip="{{ flights_count }} scheduled flights"{% endif %}>{{ date.day }}</a>
+                        {#
+                        {% if flights_count %}
+                            <div class="scheduled-flight-count">({{ flights_count }})</div>
+                        {% endif %}
+                        #}
                     {% endif %}
-                {% endif %}</div>
             {% endfor %}</div>
         </div>
     {% endfor %}</div>

@@ -128,12 +128,7 @@ class JumpseatRequest(db.Model, ModelMixin):
     )
 
     def title_string(self, verb):
-        string = f'Jump Seat Request'
-        string += ' ' + verb.title()
-        if self.request_by:
-            string += ' '
-            string += f'by {self.request_by.email_address}'
-        return string
+        return f'Jump Seat Request {verb}'.title()
 
     @hybrid_property
     def is_decided(self):
@@ -149,7 +144,7 @@ class JumpseatRequest(db.Model, ModelMixin):
         Jumpseat request has had a decision if either approved- or denied-at
         datetimes are present.
         """
-        return db.and_(cls.approved_at.is_(None), cls.denied_at.is_(None))
+        return db.or_(cls.approved_at.is_not(None), cls.denied_at.is_not(None))
 
     @classmethod
     def escalate_as_needed(cls, now):
