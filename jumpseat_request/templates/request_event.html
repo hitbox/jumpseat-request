@@ -38,28 +38,24 @@
         </div>
         <h3>Jump Seat Request</h3>
         <h3>Flight</h3>
-        <dl>
-            <dt>Flight</dt>
-            <dd>{{ jumpseat_request.flight_number }}</dd>
-            <dt>Date</dt>
-            <dd>{{ jumpseat_request.flight_date_formatted }}</dd>
-        </dl>
+        <strong>Flight</strong>
+        <p>{{ jumpseat_request.flight_number }}</p>
+        <strong>Date</strong>
+        <p>{{ jumpseat_request.flight_datetime_formatted }}</p>
         <h3>Employee Info</h3>
-        <dl>
-            <dt>Employing Airline</dt>
-            <dd>{{ jumpseat_request.employee_airline[config.JUMPSEAT_REQUEST_SHOW_AIRLINE_CODE] }}</dd>
-            <dt>Employee Number</dt>
-            <dd>{{ jumpseat_request.employee_number }}</dd>
-            {% if jumpseat_request.employee_name %}
-            <dt>Name</dt>
-            <dd>{{ jumpseat_request.employee_name }}</dd>
-            {% endif %}
-            <dt>Email</dt>
-            <dd>{{ jumpseat_request.employee_email }}</dd>
-            {% if jumpseat_request.employee_phone %}
-            <dt>Phone</dt>
-            <dd>{{ jumpseat_request.employee_phone }}</dd>
-            {% endif %}
-        </dl>
+        <strong>Employing Airline</strong>
+        <p>{{ jumpseat_request.employee_airline[config.JUMPSEAT_REQUEST_SHOW_AIRLINE_CODE] }}</p>
+        <strong>Employee Number</strong>
+        <p>{{ jumpseat_request.employee_number }}</p>
+        {% if jumpseat_request.employee_name %}
+            <strong>Name</strong>
+            <p>{{ jumpseat_request.employee_name }}</p>
+        {% endif %}
+        <strong>Email</strong>
+        <p>{{ jumpseat_request.employee_email }}</p>
+        {% if jumpseat_request.employee_phone %}
+            <strong>Phone</strong>
+            <p>{{ jumpseat_request.employee_phone }}</p>
+        {% endif %}
     </body>
 </html>
