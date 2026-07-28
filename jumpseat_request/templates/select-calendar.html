@@ -7,7 +7,7 @@
 {% block content %}
     <h3>Select Scheduled Flight from Calendar</h3>
     <p>Click a day to get a table listing of scheduled flights for that day.</p>
-    <p>Shown under the day number are the total number of scheduled flights for that day.</p>
+    <p>Mouse over for number of scheduled flights for that day.</p>
     <p>Only today onward are shown for {{ scheduled_flight_carrier.icao_code }} carrier.</p>
     {#<pre>{{ counts_for_date }}</pre>#}
     <div class="month-year grid">{% for month in months %}
