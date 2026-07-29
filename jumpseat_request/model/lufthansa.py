@@ -7,6 +7,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from jumpseat_request import settings
 from jumpseat_request.db_compat import trunc_date
 from jumpseat_request.extension import db
+from jumpseat_request.extension import timezone
 
 
 class DateComparator(Comparator):
@@ -73,6 +74,11 @@ class Leg(db.Model):
         db.DateTime,
         index = True,
     )
+
+    @property
+    def dep_sched_dt_aware(self):
+        if self.dep_sched_dt:
+            return self.dep_sched_dt.replace(tzinfo=timezone.timezones['lufthansa'])
 
     @hybrid_property
     def dep_sched_date(self):

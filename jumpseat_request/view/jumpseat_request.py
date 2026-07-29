@@ -39,6 +39,7 @@ from jumpseat_request.guard import require_is_decider
 from jumpseat_request.guard import require_password_ok
 from jumpseat_request.guard import response_for_reset_password
 from jumpseat_request.model import Airline
+from jumpseat_request.model import Employee
 from jumpseat_request.model import JumpseatRequest
 from jumpseat_request.model import Leg
 from jumpseat_request.model import User
@@ -247,6 +248,11 @@ def landing_page():
             data = {}
         jumpseat_request_form = EditJumpseatRequestForm(data=data)
 
+    if current_user.employee is not None:
+        # Account already associated with an employee remove option to save.
+        del jumpseat_request_form.save_employee_info
+        flash(f'Employee info loaded automatically.', 'info')
+
     if 'fn_number' in request.args and 'dep_sched_dt' in request.args:
         # fn_number is integer from lufthansa
         selected_fn_number = int(request.args['fn_number'])
@@ -262,8 +268,30 @@ def landing_page():
         )
         db.session.add(jumpseat_request)
         jumpseat_request_form.populate_obj(jumpseat_request)
-        # Call again for submit, with email from form to create guest if
-        # necessary.
+        
+        if (
+            current_user.employee is None
+            and
+            jumpseat_request_form.save_employee_info.data
+        ):
+            employee_number = jumpseat_request_form.employee_number.data
+            query = (
+                db.select(Employee)
+                .where(Employee.employee_number == employee_number)
+            )
+            exists = db.session.scalars(query).one_or_none()
+            if exists:
+                flash(
+                    f'Employee number {employee_number} already exists.'
+                    f'Contact an administrator to resolve.',
+                    'danger',
+                )
+            else:
+                employee = Employee()
+                db.session.add(employee)
+                jumpseat_request_form.populate_obj(employee)
+                current_user.employee = employee
+                flash(f'Employee information saved.')
 
         db.session.flush()
         flash('Jumpeat Request Created', 'success')
@@ -291,6 +319,9 @@ def landing_page():
         db.select(JumpseatRequest)
         .where(
             JumpseatRequest.request_by == current_user
+        )
+        .order_by(
+            JumpseatRequest.created_at.desc(),
         )
     )
 

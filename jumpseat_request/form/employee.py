@@ -116,12 +116,12 @@ class EmployeeSubForm(FlaskForm):
         },
     )
 
-    email_address = StringField(
-        'Email',
-        validators = [
-            DataRequired(),
-        ],
-    )
+    #email_address = StringField(
+    #    'Email',
+    #    validators = [
+    #        DataRequired(),
+    #    ],
+    #)
 
     phone = StringField(
         validators = [

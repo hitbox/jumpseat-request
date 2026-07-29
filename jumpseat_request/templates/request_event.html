@@ -7,15 +7,13 @@
     </head>
     <body>
         <h1>{{ jumpseat_request.title_string(verb) }}</h1>
-        {% if has_decider_recipient %}
+        {% if comment is defined and comment %}<h3>{{ comment }}</h3>{% endif %}
+        {% if has_decider_recipient and not jumpseat_request.is_decided %}
             {# give the recipient a link to decide request if any are user.is_decider #}
             <p>
                 <a href="{{ url_for('jumpseat_request.decide_jumpseat_request', request_id=jumpseat_request.id, _external=True) }}">Click to approve or deny request</a>
             </p>
         {% endif %}
-        <strong>Request By</strong>
-        <p>{{ jumpseat_request.request_by.email_address }}</p>
-        {% if comment is defined and comment %}<p>{{ comment }}</p>{% endif %}
         <strong>Request ID</strong>
         {% if admin_in_recipients %}
             <div>
@@ -25,23 +23,23 @@
         {% else %}
             <pre>{{ jumpseat_request.id }}</pre>
         {% endif %}
+
         {% if jumpseat_request.request_by %}
-        <strong>Created by</strong>
-        <div>
-        <a href="mailto:{{ jumpseat_request.request_by.email_address }}">{{ jumpseat_request.request_by.email_address }}</a> 
-        </div>
+        <strong>Request By</strong>
+        <p>{{ jumpseat_request.request_by.mailto_email_address }}</p>
+
         <strong>Created at</strong>
-        <div class="data">
+        <p class="data">
             {{ jumpseat_request.created_at_formatted }}
-        </div>
+        </p>
         {% endif %}
-        </div>
-        <h3>Jump Seat Request</h3>
-        <h3>Flight</h3>
-        <strong>Flight</strong>
+
+        <strong>Flight Number</strong>
         <p>{{ jumpseat_request.flight_number }}</p>
-        <strong>Date</strong>
+
+        <strong>Flight Date</strong>
         <p>{{ jumpseat_request.flight_datetime_formatted }}</p>
+
         <h3>Employee Info</h3>
         <strong>Employing Airline</strong>
         <p>{{ jumpseat_request.employee_airline[config.JUMPSEAT_REQUEST_SHOW_AIRLINE_CODE] }}</p>
@@ -51,8 +49,10 @@
             <strong>Name</strong>
             <p>{{ jumpseat_request.employee_name }}</p>
         {% endif %}
-        <strong>Email</strong>
+
+        <strong>Employee Email</strong>
         <p>{{ jumpseat_request.employee_email }}</p>
+
         {% if jumpseat_request.employee_phone %}
             <strong>Phone</strong>
             <p>{{ jumpseat_request.employee_phone }}</p>

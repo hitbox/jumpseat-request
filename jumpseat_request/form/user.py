@@ -1,6 +1,4 @@
 from flask_wtf import FlaskForm
-from jumpseat_request.model import Employee
-from jumpseat_request.model import User
 from wtforms import BooleanField
 from wtforms import FormField
 from wtforms import HiddenField
@@ -13,9 +11,12 @@ from wtforms.validators import DataRequired
 from wtforms.validators import EqualTo
 from wtforms_sqlalchemy.fields import QuerySelectField
 
+from jumpseat_request.model import Employee
+from jumpseat_request.model import User
+
+from .mixin import OrderedFieldsMixin
+from .mixin import OrderedFieldsMixin
 from .employee import EmployeeSubForm
-from .mixin import OrderedFieldsMixin
-from .mixin import OrderedFieldsMixin
 
 def unique_email_address(form, field):
     email_address = field.data
@@ -144,6 +145,8 @@ class EditAccountForm(OrderedFieldsMixin, FlaskForm):
     """
 
     email_address = email_address_field()
+
+    employee = FormField(EmployeeSubForm)
 
     update = SubmitField()
 

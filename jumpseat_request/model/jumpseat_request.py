@@ -147,24 +147,7 @@ class JumpseatRequest(db.Model, ModelMixin):
         return db.or_(cls.approved_at.is_not(None), cls.denied_at.is_not(None))
 
     @classmethod
-    def escalate_as_needed(cls, now):
-        """
-        """
-        for jumpseat_request, notification_rule in cls.needs_escalation(now):
-            current_app.logger.info(f'escalate signal for {jumpseat_request.id=}')
-            jumpseat_request.escalated_at = now
-            jumpseat_request_escalate.send(
-                cls.escalate_as_needed,
-                signal = jumpseat_request_escalate,
-                jumpseat_request = jumpseat_request,
-                comment =
-                    'Request escalated after'
-                    f' {notification_rule.created_at_age_seconds} seconds',
-            )
-            db.session.commit()
-
-    @classmethod
-    def needs_escalation(cls, now):
+    def needs_escalation(cls):
         """
         Return a list of (JumpseatRequest, NotificationRule) pairs for
         notification rules that meet the condition for escalation.
@@ -178,13 +161,32 @@ class JumpseatRequest(db.Model, ModelMixin):
             db.select(cls, NotificationRule)
             .where(
                 NotificationRule.signal_name == jumpseat_request_escalate.name,
-                ~cls.is_decided,
+                db.not_(cls.is_decided),
                 cls.created_at_age_seconds > NotificationRule.created_at_age_seconds,
                 cls.escalated_at.is_(None),
             )
         )
 
-        return db.session.execute(query).all()
+        return db.session.execute(query)
+
+    @classmethod
+    def escalate_as_needed(cls):
+        """
+        Send notifications for jumpseat requests that meet or exceed the age
+        for escalation.
+        """
+        for jumpseat_request, notification_rule in cls.needs_escalation():
+            current_app.logger.info(f'escalate signal for {jumpseat_request.id=}')
+            jumpseat_request.escalated_at = timezone.now()
+            jumpseat_request_escalate.send(
+                cls.escalate_as_needed,
+                signal = jumpseat_request_escalate,
+                jumpseat_request = jumpseat_request,
+                comment =
+                    'Request escalated after'
+                    f' {notification_rule.created_at_age_seconds} seconds',
+            )
+            db.session.commit()
 
     def short_html(self):
         """

@@ -3,6 +3,7 @@ import uuid
 from argon2 import exceptions as password_exceptions
 from flask_login import UserMixin
 from sqlalchemy.ext.hybrid import hybrid_property
+from markupsafe import Markup
 
 from jumpseat_request import settings
 from jumpseat_request.extension import db
@@ -161,6 +162,11 @@ class User(db.Model, UserMixin, ModelMixin):
 
     def as_choice_tuple(self):
         return (self.id, self.email_address)
+
+    @property
+    def mailto_email_address(self):
+        if self.email_address:
+            return Markup(f'<a href="mailto:{self.email_address}">{ self.email_address }</a>')
 
     @classmethod
     def by_email(cls, email):

@@ -21,14 +21,20 @@
                 {% for date in month.dates %}
                     {% if date.date.month == month.number %}
                         {% set url = url_for('jumpseat_request.selected_date_calendar', date=date.date) %}
-                        {% set is_current_page = date.date == request.view_args.date %}
+                        {% set is_current_page = date.date == request.view_args.date or date.date == today %}
                         {% set flights_count = counts_for_date[date.date] %}
+                        {% if flights_count %}
                         <a class="cell{% if flights_count %} has-flights{% endif %}" href="{{ url }}"{% if is_current_page  %} aria-current="page"{% endif %}{% if flights_count %} data-tooltip="{{ flights_count }} scheduled flights"{% endif %}>{{ date.day }}</a>
+                        {% else %}
+                            <div>{{ date.day }}</div>
+                        {% endif %}
                         {#
                         {% if flights_count %}
                             <div class="scheduled-flight-count">({{ flights_count }})</div>
                         {% endif %}
                         #}
+                    {% else %}
+                        <div></div>
                     {% endif %}
             {% endfor %}</div>
         </div>

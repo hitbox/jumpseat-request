@@ -1,7 +1,5 @@
 from flask import current_app
 
-
-
 class AirlineLabelGetter:
 
     def __init__(self, config_key='JUMPSEAT_REQUEST_SHOW_AIRLINE_CODE', default='icao_code'):

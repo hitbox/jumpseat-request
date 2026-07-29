@@ -8,7 +8,6 @@ from flask import current_app
 from jumpseat_request import settings
 from jumpseat_request.extension import db
 from jumpseat_request.extension import smtp
-from jumpseat_request.extension import timezone
 from jumpseat_request.model import EmailJob
 from jumpseat_request.model import EmailJobRecipient
 from jumpseat_request.model import JumpseatRequest
@@ -25,7 +24,7 @@ def background_jobs(sleep_time):
     current_app.logger.info(f'Starting email sending service {smtp.smtp_args}')
     while True:
         # Send escalation signals.
-        JumpseatRequest.escalate_as_needed(timezone.now())
+        JumpseatRequest.escalate_as_needed()
         # Send emails that are ready.
         EmailJob.send_one_pending()
         time.sleep(sleep_time)

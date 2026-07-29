@@ -15,30 +15,30 @@ from wtforms_sqlalchemy.fields import QuerySelectField
 
 from jumpseat_request import settings
 from jumpseat_request.extension import timezone
-from jumpseat_request.form import EmployeeSubForm
 from jumpseat_request.model import Airline
 from jumpseat_request.model import Employee
 from jumpseat_request.model import JumpseatRequest
 from jumpseat_request.model import User
 from jumpseat_request.model.user import password_hasher
 
+from .field import switch_field
+
 def upper(x):
     if isinstance(x, str):
         x = x.upper()
     return x
 
-def flight_datetime_field(label=None):
-    return DateTimeField(
-        label = label,
-        default = lambda: timezone.now().date(),
-        format = '%Y-%m-%d %H:%M',
-        validators = [
+def flight_datetime_field(**kwargs):
+    label = kwargs.setdefault('label', 'Flight Date')
+    kwargs.setdefault('format', '%Y-%m-%d %H:%M')
+    render_kw = kwargs.setdefault('render_kw', {})
+    render_kw.setdefault('placeholder', 'Flight Date')
+    kwargs.setdefault(
+        'validators', [
             DataRequired(),
-        ],
-        render_kw = {
-            'placeholder': 'Flight Date',
-        },
+        ]
     )
+    return DateTimeField(**kwargs)
 
 def flight_number_field(label=None):
     return StringField(
@@ -84,14 +84,18 @@ class JumpseatRequestSubform(FlaskForm):
 
     flight_number = flight_number_field()
 
-    flight_datetime = flight_datetime_field()
+    flight_datetime = flight_datetime_field(
+        label = 'Flight Date',
+    )
 
 
 class JumpseatRequestFormMixin:
 
     flight_number = flight_number_field()
 
-    flight_datetime = flight_datetime_field()
+    flight_datetime = flight_datetime_field(
+        label = 'Flight Date',
+    )
 
     employee_airline = employee_airline_field()
 
@@ -123,7 +127,9 @@ class EditJumpseatRequestAdminForm(FlaskForm):
 
     flight_number = flight_number_field()
 
-    flight_datetime = flight_datetime_field()
+    flight_datetime = flight_datetime_field(
+        label = 'Flight Date',
+    )
 
     employee_airline = employee_airline_field()
 
@@ -160,6 +166,10 @@ class EditJumpseatRequestAdminForm(FlaskForm):
 
 
 class EditJumpseatRequestForm(JumpseatRequestFormMixin, FlaskForm):
+
+    save_employee_info = switch_field(
+        label = 'Save Employee Information?',
+    )
 
     submit = SubmitField()
 

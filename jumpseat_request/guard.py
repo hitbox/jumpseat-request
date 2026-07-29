@@ -1,5 +1,6 @@
 from functools import wraps
 
+from flask import abort
 from flask import current_app
 from flask import flash
 from flask import redirect
@@ -68,8 +69,8 @@ def require_is_decider(func):
         if not getattr(current_user, 'is_decider', False):
             abort(
                 403,
-                description = f'Account {current_user.email_address} does'
-                    ' not have permission to decide requests.'
+                description =
+                    f'Account does not have permission to decide requests.'
             )
         return func(*args, **kwargs)
     return wrapped

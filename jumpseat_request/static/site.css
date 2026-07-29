@@ -267,13 +267,17 @@ button.dynamic {
 .month-year.grid {
     /* grid of months for a year */
     grid-template-columns: repeat(3, 1fr);
+    grid-gap: 4rem;
+}
+
+.month {
+    border: solid 1px var(--pico-primary-color);
 }
 
 .cell {
     /* links and weekday cells */
     white-space: nowrap;
     text-align: center;
-    grid-gap: 4rem;
 }
 
 .cell.has-flights {

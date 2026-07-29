@@ -32,7 +32,7 @@
                 <td>{{ leg.fn_carrier }}</td>
                 <td>{{ leg.fn_number }}</td>
                 {# leg is an aliased object, not the one defined in the models #}
-                <td>{{ leg.dep_sched_dt.strftime(config.JUMPSEAT_REQUEST_TIME_FORMAT) }}</td>
+                <td>{{ leg.dep_sched_dt_aware.strftime(config.JUMPSEAT_REQUEST_TIME_FORMAT) }}</td>
                 <td>{{ leg.dep_ap_sched }}</td>
                 <td>{{ leg.arr_ap_sched }}</td>
             </tr>
