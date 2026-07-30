@@ -15,6 +15,8 @@ from htmlkit.table import Column
 from htmlkit.table import Table
 from jumpseat_request.extension import db
 from jumpseat_request.extension import login_manager
+from jumpseat_request.form import EditAirlineForm
+from jumpseat_request.form import NewAirlineForm
 from jumpseat_request.form import EditAnnouncementForm
 from jumpseat_request.form import EditEmployeeForm
 from jumpseat_request.form import EditJumpseatRequestForm
@@ -163,6 +165,15 @@ def inject():
                 ]),
                 'name': 'Email',
                 'tooltip': EmailJob.__doc__,
+            },
+            {
+                'endpoint': 'admin.airline_list',
+                'current_for': set([
+                    'admin.airline_list',
+                    'admin.airline_edit',
+                ]),
+                'name': 'Airline',
+                'tooltip': Airline.__doc__,
             },
         ],
     }
@@ -573,6 +584,56 @@ admin_bp.add_url_rule(
         after_endpoint = '.notification_rule_list',
     ),
 )
+
+admin_bp.add_url_rule(
+    rule = '/airline',
+    view_func = ListView.as_view(
+        'airline_list',
+        model_class = Airline,
+        template = 'admin/table.html',
+        pagination_getter = Airline.pagination_getter,
+        edit_endpoint = lambda obj: url_for('.airline_edit', id=obj.id),
+        new_endpoint = '.airline_new',
+        table = Table(
+            description = Airline.__doc__,
+            columns = [
+                Column(
+                    attrname = 'iata_code',
+                    header = 'IATA',
+                    cast = lambda parent, name: nowrap(name),
+                ),
+                Column(
+                    attrname = 'icao_code',
+                    header = 'ICAO',
+                    cast = lambda parent, name: nowrap(name),
+                ),
+            ],
+         ),
+    ),
+)
+
+admin_bp.add_url_rule(
+    rule = '/airline/<id>',
+    view_func = SingleView.as_view(
+        'airline_edit',
+        template = 'admin/edit_form.html',
+        model_class = Airline,
+        form_class = EditAirlineForm,
+        after_endpoint = 'airline_list',
+    ),
+)
+
+admin_bp.add_url_rule(
+    '/airline/new',
+    view_func= NewObjectView.as_view(
+        'airline_new',
+        template = 'admin/edit_form.html',
+        model_class = Airline,
+        form_class = NewAirlineForm,
+        after_endpoint = '.airline_list',
+    )
+)
+
 
 # TODO
 # - admin page for failed EmailJob objects.
