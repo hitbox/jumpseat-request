@@ -7,6 +7,7 @@ flask-wtf
 git+https://github.com/hitbox/flask-okta.git
 humanize
 marshmallow
+openpyxl
 oracledb
 psycopg
 pytest-flask
