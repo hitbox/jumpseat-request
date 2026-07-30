@@ -10,7 +10,7 @@ from wtforms.validators import EqualTo
 
 class EditAirlineForm(FlaskForm):
     """
-    Edit user account.
+    Edit Airline object.
     """
     iata_code = StringField()
     icao_code = StringField()
@@ -19,7 +19,7 @@ class EditAirlineForm(FlaskForm):
 
 class NewAirlineForm(FlaskForm):
     """
-    Create a new user.
+    Create a new Airline object.
     """
 
     iata_code = StringField()
