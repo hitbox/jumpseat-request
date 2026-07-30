@@ -105,17 +105,6 @@ class EditUserForm(FlaskForm):
     # Employee associated with methods of contacts.
     is_decider = is_decider_field()
 
-    password_hash = PasswordField(
-        label = 'Password',
-        validators = [
-            DataRequired()
-        ],
-    )
-
-    confirm = confirm_password_field(
-        label = 'Confirm Password',
-    )
-
     reset_password = reset_password_field()
 
     update = SubmitField()
