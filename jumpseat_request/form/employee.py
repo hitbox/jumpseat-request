@@ -51,8 +51,12 @@ class EmployeeFormMixin:
     )
 
     name = StringField(
+        validators = [
+            DataRequired(),
+        ],
         render_kw = {
             'title': Employee.name.info.get('blurb', ''),
+            'placeholder': 'Employee Name',
         },
     )
 
@@ -111,8 +115,11 @@ class EmployeeSubForm(FlaskForm):
         filters = [
             strip_string,
         ],
+        validators = [
+            DataRequired(),
+        ],
         render_kw = {
-            'placeholder': 'Optional Employee Name',
+            'placeholder': 'Employee Name',
         },
     )
 
