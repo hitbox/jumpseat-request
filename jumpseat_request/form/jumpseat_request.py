@@ -109,8 +109,11 @@ class JumpseatRequestFormMixin:
     employee_name = StringField(
         label = 'Name',
         validators = [
-            Optional(),
+            DataRequired(),
         ],
+        render_kw = {
+            'placeholder': 'Employee Name',
+        },
     )
 
     employee_email = employee_email_address_field()
@@ -143,8 +146,11 @@ class EditJumpseatRequestAdminForm(FlaskForm):
     employee_name = StringField(
         label = 'Name',
         validators = [
-            Optional(),
+            DataRequired(),
         ],
+        render_kw = {
+            'placeholder': 'Employee Name',
+        },
     )
 
     # exclude requirement to match logged in user's email
