@@ -21,6 +21,7 @@ from jumpseat_request.model import JumpseatRequest
 from jumpseat_request.model import User
 from jumpseat_request.model.user import password_hasher
 
+from .field import TimezoneDateTimeField
 from .field import switch_field
 
 def upper(x):
@@ -38,7 +39,7 @@ def flight_datetime_field(**kwargs):
             DataRequired(),
         ]
     )
-    return DateTimeField(**kwargs)
+    return TimezoneDateTimeField(**kwargs)
 
 def flight_number_field(label=None):
     return StringField(
