@@ -46,8 +46,8 @@
 {% macro render_jumpseat_action(forms, jumpseat_request) %}
     <article>
         <header>
-            <strong>{{ jumpseat_request.flight_number }}</strong>
-            <strong>{{ jumpseat_request.flight_datetime_formatted }}</strong>
+            <strong data-tooltip="Flight Number">{{ jumpseat_request.flight_number }}</strong>
+            <strong data-tooltip="Flight Date">{{ jumpseat_request.flight_datetime_formatted }}</strong>
         </header>
         <div role="container">
             <div>
@@ -55,6 +55,23 @@
                 <div>{{ jumpseat_request.status_html() }}</div>
                 <strong>Created</strong>
                 <div>{{ jumpseat_request.created_at_formatted }}</div>
+                <p>
+                    <strong>Employee Info</strong>
+                </p>
+                <strong>Airline</strong>
+                <div>{{ jumpseat_request.employee_airline[config.JUMPSEAT_REQUEST_SHOW_AIRLINE_CODE] }}</div>
+                <strong>Employee #</strong>
+                <div>{{ jumpseat_request.employee_number }}</div>
+                {% if jumpseat_request.employee_name %}
+                    <strong>Name</strong>
+                    <div>{{ jumpseat_request.employee_name }}</div>
+                {% endif %}
+                <strong>Email</strong>
+                <div>{{ jumpseat_request.employee_email_address }}</div>
+                {% if jumpseat_request.phone %}
+                <strong>Email</strong>
+                <div>{{ jumpseat_request.employee_phone }}</div>
+                {% endif %}
             </div>
             <form class="action" method="POST" action="{{ url_for('jumpseat_request.decide_jumpseat_request', request_id=jumpseat_request.id) }}">
                 {% set form = forms[jumpseat_request.id|string] %}
