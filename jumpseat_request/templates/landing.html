@@ -13,9 +13,9 @@
         {{ form.hidden_tag() }}
         <fieldset>
             <legend><strong>Flight</strong></legend>
-            <div>
+            <p>
                 <a href="{{ url_for('jumpseat_request.select_calendar') }}">Select flight from calendar</a>
-            </div>
+            </p>
             {{ render_field(form.flight_number) }}
             {{ render_field(form.flight_datetime) }}
         </fieldset>
