@@ -184,6 +184,7 @@ class JumpseatRequest(db.Model, ModelMixin):
                 jumpseat_request = jumpseat_request,
                 comment =
                     'Request escalated after'
+                    # TODO: humanize age seconds
                     f' {notification_rule.created_at_age_seconds} seconds',
             )
             db.session.commit()
