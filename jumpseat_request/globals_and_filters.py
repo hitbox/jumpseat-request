@@ -96,6 +96,13 @@ def nav_links():
                     'jumpseat_request.list_jumpseat_requests_list'
                 ]),
             })
+            links.append({
+                'url' : url_for('jumpseat_request.approved_requests'),
+                'text' : 'Approved',
+                'current_for' : set([
+                    'jumpseat_request.approved_requests'
+                ]),
+            })
         # Jumpseat request page
         links.append({
             'url' : url_for('jumpseat_request.landing_page'),

@@ -614,12 +614,12 @@ admin_bp.add_url_rule(
 
 admin_bp.add_url_rule(
     rule = '/airline/<id>',
-    view_func = SingleView.as_view(
+    view_func = EditObjectView.as_view(
         'airline_edit',
         template = 'admin/edit_form.html',
-        model_class = Airline,
         form_class = EditAirlineForm,
-        after_endpoint = 'airline_list',
+        model_class = Airline,
+        after_endpoint = 'admin.airline_list',
     ),
 )
 

@@ -55,3 +55,8 @@ class Airline(db.Model, ModelMixin):
     @classmethod
     def by_icao(cls, icao_code):
         return db.session.scalars(db.select(cls).where(cls.icao_code == icao_code)).one()
+
+    @classmethod
+    def query_factory(cls):
+        # QuerySelectField support mixin.
+        return db.session.scalars(db.select(cls).order_by(cls.icao_code)).all()

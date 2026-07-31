@@ -48,7 +48,7 @@ def all_for_date_query(date):
         .where(
             ranked_legs_sq.c.rownumber == 1,
             trunc_date(ranked_legs_sq.c.dep_sched_dt) == date,
-            ranked_legs_sq.c.fn_carrier == scheduled_flight_carrier().iata_code,
+            ranked_legs_sq.c.fn_carrier == scheduled_flight_carrier(),
         )
     )
     return query
@@ -62,7 +62,7 @@ def counts_after_date(date):
         .where(
             ranked_legs.c.rownumber == 1, # deduplicate from subquery
             ranked_legs.c.dep_sched_dt >= date,
-            ranked_legs.c.fn_carrier == scheduled_flight_carrier().iata_code,
+            ranked_legs.c.fn_carrier == scheduled_flight_carrier(),
         )
         .group_by(
             trunc_date(ranked_legs.c.dep_sched_dt),

@@ -6,7 +6,7 @@
 
 {% block content %}
     {{ super() }}
-    {% if form.__doc__ is not none %}
+    {% if form.__doc__ is not none and form.__doc__ %}
         <h3>{{ form.__doc__ }}</h3>
     {% endif %}
     {% if form is defined %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+
+{% from "macro.html" import render_form %}
+
+
+{% block content %}
+    <form method="GET">
+        {{ render_form(form) }}
+    </form>
+    <pre>{{ request.args }}</pre>
+    <pre>form.start.data = {{ form.start.data }}</pre>
+    <pre>form.end.data = {{ form.end.data }}</pre>
+    {% if not approved %}
+        <p>No approved request for date range</p>
+        <p>Between {{ start }} and {{ end }}</p>
+    {% else %}
+    <h3>Approved Jumpseat Requests</h3>
+    <p>Between {{ start }} and {{ end }}</p>
+    <p>{{ approved|length }} results</p>
+    <table>
+        <thead>
+            <tr>
+                <th>NOTES</th>
+                <th>FLT NO</th>
+                <th>DEPT</th>
+                <th>ARRV</th>
+                <th>EMPNO</th>
+                <th>Employee Name</th>
+                <th>Rank</th>
+                <th>Company</th>
+                <th>Priority</th>
+                <th>Phone</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in approved %}
+            <tr>
+                <td class="nowrap">{{ request.reason }}</td>
+                <td class="nowrap">{{ request.flight_number }}</td>
+                <td class="nowrap">{# TODO DEPT #}</td>
+                <td class="nowrap">{# TODO ARRV #}</td>
+                <td class="nowrap">{{ request.employee_number }}</td>
+                <td class="nowrap">{{ request.employee_name }}</td>
+                <td class="nowrap">{# TODO RANK #}</td>
+                <td class="nowrap">{{ request.employee_airline.iata_code }}</td>
+                <td class="nowrap">{# TODO Priority #}</td>
+                <td class="nowrap">{{ request.employee_phone }}</td>
+            </tr>{% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+{% endblock %}

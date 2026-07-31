@@ -1,5 +1,5 @@
 import uuid
- 
+
 from flask import current_app
 from flask import render_template
 from flask import request
@@ -95,6 +95,11 @@ class JumpseatRequest(db.Model, ModelMixin):
         db.DateTime(timezone=True),
         nullable = True,
     )
+
+    @property
+    def approved_at_formatted(self):
+        if self.approved_at:
+            return self.approved_at.strftime(settings.datetime_format())
 
     denied_at = db.Column(
         db.DateTime(timezone=True),

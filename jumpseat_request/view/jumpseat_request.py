@@ -5,10 +5,12 @@ import uuid
 
 from datetime import date
 from datetime import datetime
+from datetime import time
 from datetime import timedelta
 from itertools import groupby
 from operator import attrgetter
 from operator import itemgetter
+from zoneinfo import ZoneInfo
 
 import click
 
@@ -35,6 +37,7 @@ from jumpseat_request.extension import timezone
 from jumpseat_request.form import EditJumpseatRequestForm
 from jumpseat_request.form import JumpseatRequestActionForm
 from jumpseat_request.form import LoginForm
+from jumpseat_request.form import SelectFlightDatetimeForm
 from jumpseat_request.guard import require_is_decider
 from jumpseat_request.guard import require_password_ok
 from jumpseat_request.guard import response_for_reset_password
@@ -333,6 +336,53 @@ def landing_page():
     })
 
     return render_template('landing.html', **context)
+
+@jumpseat_request_bp.route('/approved')
+@require_password_ok
+@login_required
+def approved_requests():
+    request_args = request.args.copy()
+
+    # Default to yesterday noon to today midnight
+    yesterday_noon = datetime.combine(timezone.today() - timedelta(days=1), time(12, 0))
+    yesterday_noon.replace(tzinfo=timezone.zoneinfo)
+
+    today_midnight = datetime.combine(timezone.today(), time.min)
+    today_midnight.replace(tzinfo=timezone.zoneinfo)
+
+    request_args.setdefault('start', yesterday_noon.isoformat(timespec='minutes'))
+    request_args.setdefault('end', today_midnight.isoformat(timespec='minutes'))
+
+    form = SelectFlightDatetimeForm(request_args)
+
+    if isinstance(form.start.data, datetime) and isinstance(form.end.data, datetime):
+        zoneinfo = ZoneInfo(form.timezone.data)
+        start = form.start.data.replace(tzinfo=zoneinfo)
+        end = form.end.data.replace(tzinfo=zoneinfo)
+
+        query = (
+            db.select(JumpseatRequest)
+            .where(
+                JumpseatRequest.approved_at.is_not(None),
+                JumpseatRequest.flight_datetime >= start,
+                JumpseatRequest.flight_datetime < end,
+            )
+        )
+
+        approved = db.session.scalars(query).all()
+    else:
+        approved = []
+        start = None
+        end = None
+
+    context = {
+        'form': form,
+        'approved': approved,
+        'start': start,
+        'end': end,
+    }
+    return render_template('approved_requests.html', **context)
+
 
 @jumpseat_request_bp.cli.command('query')
 @click.option('--month', type=int)

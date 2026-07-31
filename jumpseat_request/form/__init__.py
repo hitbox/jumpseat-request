@@ -10,6 +10,7 @@ from .jumpseat_request import EditJumpseatRequestAdminForm
 from .jumpseat_request import EditJumpseatRequestForm
 from .jumpseat_request import JumpseatRequestActionForm
 from .jumpseat_request import NewJumpseatRequestForm
+from .jumpseat_request import SelectFlightDatetimeForm
 from .login import LoginForm
 from .notification import EditNotificationRuleForm
 from .notification import NotificationRecipientSubform

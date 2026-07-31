@@ -93,7 +93,9 @@
 
 
 {% macro render_form(form) %}
+    {% if form.hidden_tag %}
     {{ form.hidden_tag() }}
+    {% endif %}
     {% set fields = form | rejectattr('type', 'in', ('HiddenField', 'SubmitField', 'CSRFTokenField')) %}
     {% if fields %}
     <fieldset>{% for field in fields %}

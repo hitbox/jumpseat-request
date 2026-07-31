@@ -73,10 +73,13 @@ def job_sleep_time():
     return sleep_time
 
 def scheduled_flight_carrier():
+    """
+    Return IATA code string for which carrier to query for scheduled flights.
+    """
     from jumpseat_request.model import Airline
     key = 'JUMPSEAT_REQUEST_SCHEDULED_FLIGHT_CARRIER_IATA'
     iata_code = current_app.config.get(key)
-    return Airline.by_iata(iata_code)
+    return iata_code
 
 def firstweekday():
     key = 'JUMPSEAT_REQUEST_FIRSTWEEKDAY'

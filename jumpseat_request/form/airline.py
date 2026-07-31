@@ -12,8 +12,18 @@ class EditAirlineForm(FlaskForm):
     """
     Edit Airline object.
     """
-    iata_code = StringField()
-    icao_code = StringField()
+    iata_code = StringField(
+        validators = [
+            DataRequired()
+        ],
+    )
+
+    icao_code = StringField(
+        validators = [
+            DataRequired()
+        ],
+    )
+
     update = SubmitField()
 
 
@@ -22,6 +32,16 @@ class NewAirlineForm(FlaskForm):
     Create a new Airline object.
     """
 
-    iata_code = StringField()
-    icao_code = StringField()
+    iata_code = StringField(
+        validators = [
+            DataRequired()
+        ],
+    )
+
+    icao_code = StringField(
+        validators = [
+            DataRequired()
+        ],
+    )
+
     save = SubmitField()

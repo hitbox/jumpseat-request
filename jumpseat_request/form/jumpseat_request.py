@@ -1,10 +1,15 @@
-from flask import session
+import zoneinfo
+
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from wtforms import DateTimeField
-from wtforms import FieldList
+from wtforms import Form
 from wtforms import FormField
 from wtforms import HiddenField
+from wtforms import SelectField
 from wtforms import StringField
 from wtforms import SubmitField
 from wtforms import TextAreaField
@@ -14,14 +19,14 @@ from wtforms.validators import ValidationError
 from wtforms_sqlalchemy.fields import QuerySelectField
 
 from jumpseat_request import settings
-from jumpseat_request.extension import timezone
+from jumpseat_request.extension import timezone as tzext
 from jumpseat_request.model import Airline
 from jumpseat_request.model import Employee
 from jumpseat_request.model import JumpseatRequest
 from jumpseat_request.model import User
 from jumpseat_request.model.user import password_hasher
 
-from .field import TimezoneDateTimeField
+from .field import ISODateTimeField
 from .field import switch_field
 
 def upper(x):
@@ -30,8 +35,8 @@ def upper(x):
     return x
 
 def flight_datetime_field(**kwargs):
+    kwargs.setdefault('timespec', 'minutes')
     label = kwargs.setdefault('label', 'Flight Date')
-    kwargs.setdefault('format', '%Y-%m-%d %H:%M')
     render_kw = kwargs.setdefault('render_kw', {})
     render_kw.setdefault('placeholder', 'Flight Date')
     kwargs.setdefault(
@@ -39,7 +44,7 @@ def flight_datetime_field(**kwargs):
             DataRequired(),
         ]
     )
-    return TimezoneDateTimeField(**kwargs)
+    return ISODateTimeField(**kwargs)
 
 def flight_number_field(label=None):
     return StringField(
@@ -246,3 +251,27 @@ class NewJumpseatRequestForm(JumpseatRequestFormMixin, FlaskForm):
     """
 
     create = SubmitField()
+
+
+class SelectFlightDatetimeForm(Form):
+
+    timezone = SelectField(
+        choices = [
+            (key, f'{datetime.now(ZoneInfo(key)).tzname()} ({key})')
+            for key in sorted(key for key in zoneinfo.available_timezones() if 'America' in key)
+        ],
+        default = 'America/New_York',
+    )
+
+    start = ISODateTimeField(
+        label = 'Flight datetime start',
+    )
+
+    end = ISODateTimeField(
+        label = 'Flight datetime end',
+    )
+
+    query = SubmitField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)

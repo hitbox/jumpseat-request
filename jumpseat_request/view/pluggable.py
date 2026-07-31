@@ -9,6 +9,7 @@ from flask import url_for
 from flask.views import View
 
 from jumpseat_request.extension import db
+
 class SingleView(View):
     """
     View a single object in dedicated page.
@@ -32,6 +33,7 @@ class SingleView(View):
             'instance': instance,
         }
         return render_template(self.template, **context)
+
 
 class ListView(View):
     """

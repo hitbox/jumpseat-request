@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from wtforms import BooleanField
-from wtforms import FieldList
 from wtforms import DateTimeField
+from wtforms import FieldList
+from wtforms import StringField
 
 
 class DynamicFieldList(FieldList):
@@ -24,3 +27,19 @@ class TimezoneDateTimeField(DateTimeField):
 
         if self.data is not None and self.timezone:
             self.data = self.data.replace(tzinfo=self.timezone)
+
+
+class ISODateTimeField(StringField):
+
+    def __init__(self, *args, timespec=None, **kwargs):
+        self.timespec = timespec
+        super().__init__(*args, **kwargs)
+
+    def process_data(self, value):
+        if isinstance(value, datetime):
+            self.data = value.isoformat(timespec=self.timespec)
+        else:
+            self.data = value or ""
+
+    def _value(self):
+        return self.data or ""
