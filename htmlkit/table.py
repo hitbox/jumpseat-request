@@ -101,8 +101,9 @@ class Table:
         return instance
 
 def deepgetattr(obj, name):
-    for name in name.split('.'):
-        obj = getattr(obj, name)
-        if obj is None:
-            return
-    return obj
+    if name is not None:
+        for name in name.split('.'):
+            obj = getattr(obj, name, None)
+            if obj is None:
+                return
+        return obj

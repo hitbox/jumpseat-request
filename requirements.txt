@@ -1,3 +1,4 @@
+alembic
 argon2-cffi
 blinker
 flask

@@ -16,8 +16,8 @@ jumpseat_request_decided = jumpseat_request_signals.signal('jumpseat-request-dec
 
 account_creation_requested = jumpseat_request_signals.signal('create-account-request')
 
-text_body_template = 'request_event.txt'
-html_body_template = 'request_event.html'
+text_body_template = 'request-event.txt'
+html_body_template = 'request-event.html'
 
 created_subscriber = JumpseatRequestEmailSubscriber(
     subject = 'Jump Seat Request Created',

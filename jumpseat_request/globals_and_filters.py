@@ -88,6 +88,14 @@ def nav_links():
     links = []
 
     if current_user.is_authenticated:
+        # Jumpseat request page
+        links.append({
+            'url' : url_for('jumpseat_request.landing_page'),
+            'text': 'Request',
+            'current_for': set([
+                'jumpseat_request.landing_page'
+            ]),
+        })
         if current_user.is_decider:
             links.append({
                 'url' : url_for('jumpseat_request.list_jumpseat_requests'),
@@ -98,19 +106,11 @@ def nav_links():
             })
             links.append({
                 'url' : url_for('jumpseat_request.approved_requests'),
-                'text' : 'Approved',
+                'text' : 'Export',
                 'current_for' : set([
                     'jumpseat_request.approved_requests'
                 ]),
             })
-        # Jumpseat request page
-        links.append({
-            'url' : url_for('jumpseat_request.landing_page'),
-            'text': 'Request',
-            'current_for': set([
-                'jumpseat_request.landing_page'
-            ]),
-        })
         # Authenticated user profile page
         links.append({
             'url' : url_for('user.profile'),

@@ -1,6 +1,8 @@
 import zoneinfo
 
 from datetime import datetime
+from datetime import time
+from datetime import timedelta
 from zoneinfo import ZoneInfo
 
 from flask_login import current_user
@@ -14,15 +16,17 @@ from wtforms import StringField
 from wtforms import SubmitField
 from wtforms import TextAreaField
 from wtforms.validators import DataRequired
+from wtforms.validators import Length
 from wtforms.validators import Optional
 from wtforms.validators import ValidationError
 from wtforms_sqlalchemy.fields import QuerySelectField
 
 from jumpseat_request import settings
-from jumpseat_request.extension import timezone as tzext
+from jumpseat_request.extension import timezone
 from jumpseat_request.model import Airline
 from jumpseat_request.model import Employee
 from jumpseat_request.model import JumpseatRequest
+from jumpseat_request.model import Rank
 from jumpseat_request.model import User
 from jumpseat_request.model.user import password_hasher
 
@@ -78,7 +82,6 @@ def employee_email_address_field(**kwargs):
     kwargs.setdefault('label', 'Email')
     kwargs.setdefault('validators', [
         DataRequired(),
-        email_matches_current_user,
     ])
     field = StringField(**kwargs)
     return field
@@ -103,6 +106,33 @@ class JumpseatRequestFormMixin:
         label = 'Flight Date',
     )
 
+    scheduled_departure_airport = StringField(
+        label = 'Departure',
+        validators = [
+            Length(min=3, max=3),
+        ],
+        render_kw = {
+            'placeholder': 'Sched. Departure Airport',
+        },
+    )
+
+    scheduled_arrival_airport = StringField(
+        label = 'Arrival',
+        validators = [
+            Length(min=3, max=3),
+        ],
+        render_kw = {
+            'placeholder': 'Sched. Arrival Airport',
+        },
+    )
+
+    rank_object = QuerySelectField(
+        label = 'Rank',
+        query_factory = Rank.query_factory,
+        get_label = lambda obj: f'{obj.name}({obj.code})',
+        allow_blank = True,
+    )
+
     employee_airline = employee_airline_field()
 
     employee_number = StringField(
@@ -110,6 +140,9 @@ class JumpseatRequestFormMixin:
         validators = [
             DataRequired(),
         ],
+        render_kw = {
+            'placeholder': 'Required Employee Number',
+        },
     )
 
     employee_name = StringField(
@@ -129,58 +162,24 @@ class JumpseatRequestFormMixin:
         validators = [
             Optional(),
         ],
-    )
-
-
-class EditJumpseatRequestAdminForm(FlaskForm):
-
-    flight_number = flight_number_field()
-
-    flight_datetime = flight_datetime_field(
-        label = 'Flight Date',
-    )
-
-    employee_airline = employee_airline_field()
-
-    employee_number = StringField(
-        label = 'Employee #',
-        validators = [
-            DataRequired(),
-        ],
-    )
-
-    employee_name = StringField(
-        label = 'Name',
-        validators = [
-            DataRequired(),
-        ],
         render_kw = {
-            'placeholder': 'Employee Name',
+            'placeholder': 'Employee Phone',
         },
     )
 
-    # exclude requirement to match logged in user's email
-    employee_email = StringField(
-        label = 'Email',
-        validators = [
-            DataRequired(),
-        ]
-    )
 
-    employee_phone = StringField(
-        label = 'Phone',
-        validators = [
-            Optional(),
-        ],
-    )
+class EditJumpseatRequestAdminForm(JumpseatRequestFormMixin, FlaskForm):
 
-    submit = SubmitField()
+    save = SubmitField()
 
 
 class EditJumpseatRequestForm(JumpseatRequestFormMixin, FlaskForm):
 
     save_employee_info = switch_field(
-        label = 'Save Employee Information?',
+        label = 'Save Employee Info?',
+        render_kw = {
+            'placeholder': 'Save Employee Information?',
+        },
     )
 
     submit = SubmitField()
@@ -203,6 +202,7 @@ class JumpseatRequestActionForm(FlaskForm):
     )
 
     approve = SubmitField(
+        label = 'Approve',
         render_kw = {
             'class': '',
             'role': 'button',
@@ -210,8 +210,9 @@ class JumpseatRequestActionForm(FlaskForm):
     )
 
     deny = SubmitField(
+        label = 'Deny',
         render_kw = {
-            'class': 'secondary danger',
+            'class': 'secondary',
             'role': 'button',
         }
     )
@@ -253,25 +254,80 @@ class NewJumpseatRequestForm(JumpseatRequestFormMixin, FlaskForm):
     create = SubmitField()
 
 
+def timezone_choices(keys=None):
+    choices = []
+
+    timezones = [
+        'America/New_York',
+        'UTC'
+    ]
+
+    def sort_key(timezone_key):
+        if timezone_key in timezones:
+            return timezones.index(timezone_key)
+        else:
+            return 999
+
+    keys = (key for key in zoneinfo.available_timezones() if key in timezones)
+    keys = sorted(keys, key=sort_key)
+    for key in keys:
+        choice = (key, f'{datetime.now(ZoneInfo(key)).tzname()} ({key})')
+        choices.append(choice)
+    return choices
+
+def today_noon():
+    # use extension for timezone
+    today = timezone.today()
+    today_noon = datetime.combine(today, time(12,0), tzinfo=timezone.zoneinfo)
+    return today_noon
+
+def tomorrow_midnight():
+    # use extension for timezone
+    tomorrow = timezone.now() + timedelta(days=1)
+    tomorrow_midnight = tomorrow.replace(
+        hour = 0,
+        minute = 0,
+        microsecond = 0,
+        tzinfo = timezone.zoneinfo,
+    )
+    return tomorrow_midnight
+
 class SelectFlightDatetimeForm(Form):
 
     timezone = SelectField(
-        choices = [
-            (key, f'{datetime.now(ZoneInfo(key)).tzname()} ({key})')
-            for key in sorted(key for key in zoneinfo.available_timezones() if 'America' in key)
-        ],
+        choices = timezone_choices(),
         default = 'America/New_York',
     )
 
     start = ISODateTimeField(
         label = 'Flight datetime start',
+        timespec = 'minutes',
+        validators = [
+            DataRequired()
+        ],
     )
 
     end = ISODateTimeField(
         label = 'Flight datetime end',
+        timespec = 'minutes',
+        validators = [
+            DataRequired()
+        ],
     )
 
-    query = SubmitField()
+    select = SubmitField()
+
+    export_excel = SubmitField(
+        render_kw = {
+            'class': 'secondary',
+        }
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if self.start.data is None:
+            self.start.data = today_noon()
+
+        if self.end.data is None:
+            self.end.data = tomorrow_midnight()

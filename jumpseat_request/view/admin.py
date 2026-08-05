@@ -15,37 +15,33 @@ from htmlkit.table import Column
 from htmlkit.table import Table
 from jumpseat_request.extension import db
 from jumpseat_request.extension import login_manager
+from jumpseat_request.form import EditJumpseatRequestAdminForm
 from jumpseat_request.form import EditAirlineForm
-from jumpseat_request.form import NewAirlineForm
 from jumpseat_request.form import EditAnnouncementForm
 from jumpseat_request.form import EditEmployeeForm
 from jumpseat_request.form import EditJumpseatRequestForm
 from jumpseat_request.form import EditNotificationRuleForm
+from jumpseat_request.form import EditRankForm
 from jumpseat_request.form import EditUserForm
+from jumpseat_request.form import NewAirlineForm
 from jumpseat_request.form import NewAnnouncementForm
 from jumpseat_request.form import NewEmployeeForm
 from jumpseat_request.form import NewJumpseatRequestForm
+from jumpseat_request.form import NewRankForm
 from jumpseat_request.form import NewUserForm
-from jumpseat_request.form import model_class_forms
 from jumpseat_request.frontend import many_formatter
 from jumpseat_request.frontend import yesno
-from jumpseat_request.guard import login_and_password_ok
 from jumpseat_request.model import Airline
 from jumpseat_request.model import Announcement
-from jumpseat_request.model import ApplicationSetting
+from jumpseat_request.model import ApplicationSetting # TODO
 from jumpseat_request.model import EmailJob
 from jumpseat_request.model import Employee
-from jumpseat_request.model import Identity
 from jumpseat_request.model import JumpseatRequest
-from jumpseat_request.model import JumpseatRequestNotificationRuleAssoc
 from jumpseat_request.model import NotificationRule
-from jumpseat_request.model import NotificationRule
-from jumpseat_request.model import Provider
+from jumpseat_request.model import Rank
 from jumpseat_request.model import User
 from jumpseat_request.seed import seed_database
 
-from .admin_spec import AdminSpec
-from .admin_spec import admin_specs_for_views
 from .pluggable import EditObjectView
 from .pluggable import ListView
 from .pluggable import NewObjectView
@@ -174,6 +170,16 @@ def inject():
                 ]),
                 'name': 'Airline',
                 'tooltip': Airline.__doc__,
+            },
+            {
+                'endpoint': 'admin.rank_list',
+                'current_for': set([
+                    'admin.rank_list',
+                    'admin.rank_edit',
+                    'admin.rank_new',
+                ]),
+                'name': 'Rank',
+                'tooltip': Rank.__doc__,
             },
         ],
     }
@@ -417,31 +423,35 @@ admin_bp.add_url_rule(
                 Column(
                     attrname = 'flight_datetime',
                     header = 'Flight DateTime',
-                    ),
+                ),
                 Column(
                     attrname = 'flight_number',
                     header = 'Flight #',
-                    ),
+                ),
                 Column(
                     attrname = 'employee_airline.icao_code',
-                    header = 'Flight #',
-                    ),
+                    header = 'Empl. Airline',
+                ),
+                Column(
+                    attrname = 'rank_code',
+                    header = 'Rank',
+                ),
                 Column(
                     attrname = 'employee_number',
                     header = 'Empl. #',
-                    ),
+                ),
                 Column(
                     attrname = 'employee_name',
                     header = 'Name',
-                    ),
+                ),
                 Column(
                     attrname = 'request_by.email_address',
                     header = 'Requester Email',
-                    ),
+                ),
                 Column(
                     attrname = 'status_html',
                     header = 'Status',
-                    ),
+                ),
             ]
         ),
     ),
@@ -453,7 +463,7 @@ admin_bp.add_url_rule(
         'jumpseat_request_edit',
         template = 'admin/edit_form.html',
         model_class = JumpseatRequest,
-        form_class = EditJumpseatRequestForm,
+        form_class = EditJumpseatRequestAdminForm,
         after_endpoint = '.jumpseat_request_list',
     ),
 )
@@ -634,6 +644,63 @@ admin_bp.add_url_rule(
     )
 )
 
+
+admin_bp.add_url_rule(
+    rule = '/rank',
+    view_func = ListView.as_view(
+        'rank_list',
+        model_class = Rank,
+        template = 'admin/table.html',
+        pagination_getter = Rank.pagination_getter,
+        edit_endpoint = lambda obj: url_for('.rank_edit', id=obj.id),
+        new_endpoint = '.rank_new',
+        more_context = {
+            'pagination_doc': Rank.pagination_getter.__doc__,
+        },
+        table = Table(
+            description = Rank.__doc__,
+            columns = [
+                Column(
+                    attrname = 'id',
+                    header = 'ID',
+                    cast = lambda parent, name: nowrap(name),
+                ),
+                Column(
+                    attrname = 'code',
+                    header = 'Code',
+                    cast = lambda parent, name: nowrap(name),
+                ),
+                Column(
+                    attrname = 'name',
+                    header = 'Name',
+                    cast = lambda parent, name: nowrap(name),
+                ),
+            ],
+         ),
+    ),
+)
+
+admin_bp.add_url_rule(
+    rule = '/rank/<id>',
+    view_func = EditObjectView.as_view(
+        'rank_edit',
+        template = 'admin/edit_form.html',
+        form_class = EditRankForm,
+        model_class = Rank,
+        after_endpoint = 'admin.rank_list',
+    ),
+)
+
+admin_bp.add_url_rule(
+    '/rank/new',
+    view_func= NewObjectView.as_view(
+        'rank_new',
+        template = 'admin/edit_form.html',
+        model_class = Rank,
+        form_class = NewRankForm,
+        after_endpoint = 'admin.rank_list',
+    )
+)
 
 # TODO
 # - admin page for failed EmailJob objects.

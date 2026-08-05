@@ -52,6 +52,7 @@ class ListView(View):
         edit_endpoint=None,
         form_class = None,
         note = None,
+        more_context = None,
     ):
         self.template = template
         self.model_class = model_class
@@ -62,6 +63,7 @@ class ListView(View):
             raise ValueError(f'edit_endpoint {edit_endpoint} must be callable.')
         self.edit_endpoint = edit_endpoint
         self.note = note
+        self.more_context = more_context
 
     def dispatch_request(self):
         context = {
@@ -73,6 +75,9 @@ class ListView(View):
             'edit_endpoint': self.edit_endpoint,
             'note': self.note,
         }
+        if self.more_context:
+            for key, value in self.more_context.items():
+                context.setdefault(key, value)
         return render_template(self.template, **context)
 
 
@@ -123,18 +128,20 @@ class EditObjectView(View):
         form_class,
         kwargs_for_form = None,
         after_endpoint = None,
+        more_context = None,
     ):
         self.template = template
         self.model_class = model_class
         self.form_class = form_class
         self.kwargs_for_form = kwargs_for_form
         self.after_endpoint = after_endpoint
+        self.more_context = more_context
 
     def dispatch_request(self, **ident):
         instance = db.session.get(self.model_class, ident)
 
         if instance is None:
-            abort(404, description=f'Instance not found {kwargs}')
+            abort(404, description=f'Instance not found {ident=}')
 
         form_class = self.form_class
         if inspect.isclass(form_class):
@@ -154,9 +161,15 @@ class EditObjectView(View):
             form = form_class(formdata=request.form, obj=instance)
 
             if form.validate():
-                form.populate_obj(instance)
+                delete_field = getattr(form, 'delete', None)
+                if delete_field and delete_field.data:
+                    # User clicked delete.
+                    db.session.delete(instance)
+                    flash(f'{self.model_class.__tablename__} deleted', 'success')
+                else:
+                    form.populate_obj(instance)
+                    flash(f'{self.model_class.__tablename__} updated', 'success')
                 db.session.commit()
-                flash(f'{self.model_class.__tablename__} updated', 'success')
                 if self.after_endpoint:
                     next_url = url_for(self.after_endpoint)
                     return redirect(next_url)
@@ -166,4 +179,7 @@ class EditObjectView(View):
             'form_class': form_class,
             'form': form,
         }
+        if self.more_context:
+            for key, value in self.more_context.items():
+                context.setdefault(key, value)
         return render_template(self.template, **context)

@@ -18,10 +18,23 @@
             </p>
             {{ render_field(form.flight_number) }}
             {{ render_field(form.flight_datetime) }}
+            {{ render_field(form.scheduled_departure_airport) }}
+            {{ render_field(form.scheduled_arrival_airport) }}
         </fieldset>
         <fieldset>
             <legend><strong>Employee Information</strong></legend>
+            {{ render_field(form.rank_object) }}
+            {% if current_user.is_admin and not form.rank_object.render_kw.disabled %}
+                <p>
+                <a href="{{ url_for('admin.rank_list') }}">Edit available ranks here</a>
+                </p>
+            {% endif %}
             {{ render_field(form.employee_airline) }}
+            {% if current_user.is_admin and not form.employee_airline.render_kw.disabled %}
+                <p>
+                <a href="{{ url_for('admin.airline_list') }}">Edit available airlines here</a>
+                </p>
+            {% endif %}
             {{ render_field(form.employee_number) }}
             {{ render_field(form.employee_name) }}
             {{ render_field(form.employee_email) }}

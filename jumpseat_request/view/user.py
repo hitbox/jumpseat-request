@@ -9,6 +9,7 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from flask_login import current_user
+from flask_login import login_required
 from flask_login import logout_user
 from markupsafe import Markup
 
@@ -16,6 +17,7 @@ from jumpseat_request.extension import db
 from jumpseat_request.form import EditAccountForm
 from jumpseat_request.form import VerifyEmailForm
 from jumpseat_request.guard import login_and_password_ok
+from jumpseat_request.model import Employee
 from jumpseat_request.model import User
 from jumpseat_request.signal import account_creation_requested
 
@@ -25,13 +27,42 @@ user_bp = Blueprint('user', __name__, url_prefix='/user')
 
 @user_bp.route('/profile', methods=['GET', 'POST'])
 @login_and_password_ok
+@login_required
 def profile():
     """
-    current_user profile page
+    Current user's profile page where they can
+    logout and edit their employee info.
     """
     edit_account_form = EditAccountForm(obj=current_user)
 
+    if current_user.employee is None:
+        # Add unique name validation for creating new employee object.
+        def unique_employee_name(form, field):
+            query = (
+                db.select(Employee)
+                .where(Employee.name == field.data)
+            )
+            exists = db.session.scalars(query).one_or_none()
+            if exists:
+                raise ValidationError(f'Name "{field.data}" already exists')
+
+        edit_account_form.employee.name.validators.append(
+            unique_employee_name,
+        )
+
     if edit_account_form.validate_on_submit():
+        # Ensure Employee object for form to populate
+        employee_number = edit_account_form.employee.employee_number.data
+
+        existing = Employee.by_employee_number(employee_number)
+        if current_user.employee is None:
+            if not existing:
+                flash('New employee object created', 'info')
+                current_user.employee = Employee()
+            else:
+                flash('Updated existing employee object.', 'warning')
+                current_user.employee = existing
+
         edit_account_form.populate_obj(current_user)
         db.session.commit()
         flash('Profile updated', 'info')
@@ -119,18 +150,39 @@ def delete_user(email_address):
     click.echo(f'{email_address} deleted')
 
 @user_bp.cli.command('create')
-@click.option('--email', required=True)
+@click.option('--if-not-exists', is_flag=True, help='Ignore existing.')
+@click.option('--quiet', is_flag=True)
+@click.option('--email-address', required=True)
 @click.password_option('--password', required=True)
 @click.option('--is-admin', is_flag=True)
 @click.option('--is-decider', is_flag=True)
 @click.option('--disabled', is_flag=True, help='Create user as disabled')
 @click.option('--is-verified', is_flag=True, help='Mark user\'s email address as verified.')
-def create_user(email, password, is_admin, is_decider, disabled, is_verified):
+def create_user(
+    if_not_exists,
+    quiet,
+    email_address,
+    password,
+    is_admin,
+    is_decider,
+    disabled,
+    is_verified,
+):
     """
     Create a new user account for application.
     """
+    exists = User.by_email(email_address)
+
+    if exists:
+        if if_not_exists:
+            if not quiet:
+                click.echo(f'{email_address} already exists.')
+            else:
+                click.echo(f'User {email_address} already exists')
+                raise click.Abort()
+
     user = User(
-        email_address = email,
+        email_address = email_address,
         password_hash = password,
         is_admin = is_admin,
         is_active = not disabled,
@@ -140,6 +192,9 @@ def create_user(email, password, is_admin, is_decider, disabled, is_verified):
         user.confirm_email()
     db.session.add(user)
     db.session.commit()
+
+    if not quiet:
+        click.echo(f'{email_address} created.')
 
 @user_bp.cli.command('checkpass')
 @click.argument('email_address')

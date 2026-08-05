@@ -23,7 +23,13 @@ class JumpseatRequestEmailSubscriber:
     Send emails for jumpseat request signals like created and decided.
     """
 
-    def __init__(self, text_body_template, html_body_template, subject, verb=None):
+    def __init__(
+        self,
+        text_body_template,
+        html_body_template,
+        subject,
+        verb = None,
+    ):
         self.subject = subject
         self.text_body_template = text_body_template
         self.html_body_template = html_body_template
@@ -71,7 +77,7 @@ class JumpseatRequestEmailSubscriber:
 
             # Add flag for template if any recipients are decider accounts.
             users_is_decider = (user.is_decider for user in recipient_users)
-            context['has_decider_recipient'] = any(users_is_decider)
+            context['link_to_decide'] = any(users_is_decider)
 
             # Recipients email addresses list
             recipients = [

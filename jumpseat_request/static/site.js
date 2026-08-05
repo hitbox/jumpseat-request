@@ -38,16 +38,7 @@ function removeFieldListRow(event) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.addEventListener('click', function (event) {
-        /* Click element like a link */
-        var row = event.target.closest('[data-href]');
-        if (!row) return;
-
-        window.location = row.getAttribute('data-href');
-    });
-
     document.querySelectorAll('[data-href]').forEach(function(el) {
-        console.log(el);
         // click event for elements with data-href
         el.addEventListener('click', function(event) {
             window.location = el.dataset['href'];

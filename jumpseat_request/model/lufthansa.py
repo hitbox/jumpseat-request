@@ -1,6 +1,7 @@
 from datetime import datetime
 from datetime import timedelta
 
+from flask import url_for
 from sqlalchemy.ext.hybrid import Comparator
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -8,9 +9,10 @@ from jumpseat_request import settings
 from jumpseat_request.db_compat import trunc_date
 from jumpseat_request.extension import db
 from jumpseat_request.extension import timezone
-
+from jumpseat_request.schema import LegQueryArgsSchema
 
 class DateComparator(Comparator):
+
     def __eq__(self, other):
         start = datetime.combine(other, datetime.min.time())
         end = start + timedelta(days=1)
@@ -80,6 +82,11 @@ class Leg(db.Model):
         if self.dep_sched_dt:
             return self.dep_sched_dt.replace(tzinfo=timezone.timezones['lufthansa'])
 
+    @property
+    def flight_datetime(self):
+        # property alias name for the sake of schema dump
+        return self.dep_sched_dt_aware
+
     @hybrid_property
     def dep_sched_date(self):
         if self.dep_sched_dt:
@@ -102,6 +109,11 @@ class Leg(db.Model):
         },
     )
 
+    @property
+    def scheduled_departure_airport(self):
+        # property alias name for the sake of schema dump
+        return self.dep_ap_sched
+
     arr_ap_sched = db.Column(
         db.String(3),
         nullable = False,
@@ -109,6 +121,11 @@ class Leg(db.Model):
             'comment': 'Scheduled arrival airport.'
         },
     )
+
+    @property
+    def scheduled_arrival_airport(self):
+        # property alias name for the sake of schema dump
+        return self.arr_ap_sched
 
     @property
     def flight_number(self):
@@ -150,3 +167,11 @@ class Leg(db.Model):
         from jumpseat_request.query import all_for_date_query
         query = all_for_date_query(date)
         return db.session.scalars(query).all()
+
+    def url_for_fill(self, endpoint):
+        """
+        Create a url to an endpoint that takes query args for a scheduled leg.
+        """
+        schema = LegQueryArgsSchema()
+        query_args = schema.dump(self)
+        return url_for(endpoint, **query_args)

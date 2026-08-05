@@ -5,6 +5,7 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from markupsafe import Markup
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from jumpseat_request import settings
@@ -14,6 +15,7 @@ from jumpseat_request.signal import jumpseat_request_decided
 from jumpseat_request.signal import jumpseat_request_escalate
 
 from .mixin import ModelMixin
+from .rank import Rank
 from .user import User
 
 class JumpseatRequest(db.Model, ModelMixin):
@@ -31,6 +33,34 @@ class JumpseatRequest(db.Model, ModelMixin):
         db.DateTime(timezone=True),
         nullable = False,
         comment = 'Scheduled departure datetime.',
+    )
+
+    scheduled_departure_airport = db.Column(
+        db.String(3),
+        nullable = False,
+        index = True,
+    )
+
+    scheduled_arrival_airport = db.Column(
+        db.String(3),
+        nullable = False,
+        index = True,
+    )
+
+    rank_id = db.Column(
+        db.UUID(as_uuid=True),
+        db.ForeignKey('rank.id'),
+        nullable = True,
+    )
+
+    rank_object = db.orm.relationship(
+        'Rank',
+    )
+
+    rank_code = association_proxy(
+        'rank_object',
+        'code',
+        creator = lambda rank_code: Rank(code=rank_code)
     )
 
     @property
@@ -225,9 +255,9 @@ class JumpseatRequest(db.Model, ModelMixin):
 
     def status_html(self):
         if self.approved_at is not None:
-            return Markup(f'<span class="request-status approved">Approved</span>')
+            return Markup(f'<span class="request-status approved" data-tooltip="approved at: { self.approved_at }">Approved</span>')
         elif self.denied_at is not None:
-            return Markup(f'<span class="request-status denied">Denied</span>')
+            return Markup(f'<span class="request-status denied" data-tooltip="denied at: {self.denied_at}">Denied</span>')
         else:
             return Markup(f'<span class="request-status pending">Pending</span>')
 
@@ -267,3 +297,15 @@ class JumpseatRequest(db.Model, ModelMixin):
             .order_by(cls.created_at.desc())
         )
         return db.paginate(query)
+
+    @classmethod
+    def all_approved_for_datetime_range(cls, start, end):
+        query = (
+            db.select(JumpseatRequest)
+            .where(
+                JumpseatRequest.approved_at.is_not(None),
+                JumpseatRequest.flight_datetime >= start,
+                JumpseatRequest.flight_datetime < end,
+            )
+        )
+        return db.session.scalars(query).all()

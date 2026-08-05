@@ -1,6 +1,7 @@
 import uuid
 
 from markupsafe import Markup
+from sqlalchemy.ext.associationproxy import association_proxy
 
 from jumpseat_request.extension import db
 
@@ -59,6 +60,22 @@ class Employee(db.Model, ModelMixin):
         },
     )
 
+    rank_id = db.Column(
+        db.UUID(as_uuid=True),
+        db.ForeignKey('rank.id'),
+        nullable = True,
+    )
+
+    rank_object = db.orm.relationship(
+        'Rank',
+    )
+
+    rank_code = association_proxy(
+        'rank_object',
+        'code',
+        creator = lambda rank_code: Rank(code=rank_code)
+    )
+
     employee_number = db.Column(
         db.String,
         nullable = False,
@@ -68,6 +85,14 @@ class Employee(db.Model, ModelMixin):
             'blurb': 'Employee number as given by their employer.',
         }
     )
+
+    @classmethod
+    def by_employee_number(cls, employee_number):
+        query = (
+            db.select(Employee)
+            .where(Employee.employee_number == employee_number)
+        )
+        return db.session.scalars(query).one_or_none()
 
     name = db.Column(
         db.String,

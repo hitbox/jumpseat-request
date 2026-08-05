@@ -8,9 +8,13 @@
     <a href="{{ url_for('jumpseat_request.select_calendar') }}">Calendar Select</a>
 
     <nav class="dates">
+        {# List of nearby dates to avoid going back to calendar #}
         <ul>{% for date in datenav %}
                 <li>
-                    <a href="{{ url_for('jumpseat_request.selected_date_calendar', date=date) }}"{% if date == request.view_args.date %} aria-current="page"{% endif %}>{{ date.strftime(config.JUMPSEAT_REQUEST_DATE_FORMAT) }}</a></li>
+                    {% set url = url_for('jumpseat_request.selected_date_calendar', date=date) %}
+                    {% set is_current = date == request.view_args.date %}
+                    {% set text = date.strftime(config.JUMPSEAT_REQUEST_DATE_FORMAT) %}
+                    <a href="{{ url }}"{% if is_current %} aria-current="page"{% endif %}>{{ text }}</a></li>
             {%endfor %}</ul>
     </nav>
 

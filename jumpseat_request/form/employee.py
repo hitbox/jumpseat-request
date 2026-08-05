@@ -8,11 +8,13 @@ from wtforms import TextAreaField
 from wtforms import ValidationError
 from wtforms.validators import DataRequired
 from wtforms.validators import EqualTo
+from wtforms.validators import ValidationError
 from wtforms_sqlalchemy.fields import QuerySelectField
 
 from jumpseat_request.extension import db
 from jumpseat_request.model import Airline
 from jumpseat_request.model import Employee
+from jumpseat_request.model import Rank
 from jumpseat_request.model import User
 from jumpseat_request.model.user import password_hasher
 from jumpseat_request.settings import AirlineLabelGetter
@@ -93,13 +95,20 @@ class EmployeeSubForm(FlaskForm):
 
 
     airline = QuerySelectField(
-        label = 'Employer',
+        label = 'Employer Airline',
         query_factory = Airline.query_factory,
         get_label = AirlineLabelGetter(),
         get_pk = lambda airline: str(airline.id),
         validators = [
             DataRequired(),
         ],
+    )
+
+    rank_object = QuerySelectField(
+        label = 'Rank',
+        query_factory = Rank.query_factory,
+        get_label = lambda obj: f'{obj.name}({obj.code})',
+        allow_blank = True,
     )
 
     employee_number = StringField(
@@ -122,13 +131,6 @@ class EmployeeSubForm(FlaskForm):
             'placeholder': 'Employee Name',
         },
     )
-
-    #email_address = StringField(
-    #    'Email',
-    #    validators = [
-    #        DataRequired(),
-    #    ],
-    #)
 
     phone = StringField(
         validators = [

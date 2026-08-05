@@ -15,7 +15,6 @@ from jumpseat_request.model import Employee
 from jumpseat_request.model import User
 
 from .mixin import OrderedFieldsMixin
-from .mixin import OrderedFieldsMixin
 from .employee import EmployeeSubForm
 
 def unique_email_address(form, field):
@@ -83,7 +82,7 @@ def confirm_password_field(**kwargs):
 
 class EditUserForm(FlaskForm):
     """
-    Edit user account.
+    Admin user account editing form.
     """
 
     email_address = email_address_field()
@@ -123,6 +122,7 @@ class EditUserForm(FlaskForm):
     def populate_obj(self, obj):
         for field in self:
             if field.name == 'email_verified' and field.data:
+                # Set user instance confirmed email field to true/datetime.
                 obj.confirm_email()
             else:
                 field.populate_obj(obj, field.name)

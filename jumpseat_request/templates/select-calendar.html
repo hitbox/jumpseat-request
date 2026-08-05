@@ -2,8 +2,6 @@
 {% extends "base.html" %}
 
 
-
-
 {% block content %}
     <h3>Select Scheduled Flight from Calendar</h3>
     <p>Click a day to get a table listing of scheduled flights for that day.</p>
@@ -28,11 +26,6 @@
                         {% else %}
                             <div>{{ date.day }}</div>
                         {% endif %}
-                        {#
-                        {% if flights_count %}
-                            <div class="scheduled-flight-count">({{ flights_count }})</div>
-                        {% endif %}
-                        #}
                     {% else %}
                         <div></div>
                     {% endif %}

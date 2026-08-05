@@ -4,9 +4,11 @@ Frontend related utilities.
 from datetime import datetime
 from operator import attrgetter
 
-from flask import url_for
-from flask import render_template
 from flask import current_app
+from flask import flash
+from flask import render_template
+from flask import session
+from flask import url_for
 from markupsafe import Markup
 
 from htmlkit.core import mailto
@@ -33,6 +35,11 @@ class ValueFormatter:
                 return formatter(parent, value)
 
 
+def flash_once(key, message, category='info'):
+    if key not in session:
+        flash(message, category)
+        session[key] = True
+
 def airline_label_getter(airline):
     """
     Configurable Airline object label getter.
@@ -43,6 +50,26 @@ def airline_label_getter(airline):
     attr = current_app.config.get(key, 'icao_code')
     return attrgetter(attr)
 
+def checkbox_switch(**kwargs):
+    checked = kwargs.setdefault('checked', False)
+    disabled = kwargs.setdefault('disabled', False)
+    switch = kwargs.setdefault('switch', False)
+    class_ = kwargs.setdefault('class_', '')
+    html = Markup(
+        f'<label>'
+        f'<input type="checkbox"'
+    )
+    if switch:
+        html += ' role="switch"'
+    if checked:
+        html += " checked"
+    if disabled:
+        html += ' disabled'
+    if class_:
+        html += f' class="{class_}"'
+    html += '</label>'
+    return html
+
 def yesno(value):
     """
     Return boolean as Yes/No.
@@ -51,8 +78,10 @@ def yesno(value):
     if not isinstance(value, bool):
         raise ValueError(f'Invalid type {type(value)}')
     if value is True:
+        return checkbox_switch(checked=True, disabled=True,)
         return Markup(f'<span class="bool bool-yes">Yes</span>')
     elif value is False:
+        return checkbox_switch(checked=False, disabled=True,)
         return Markup('<span class="bool bool-no">No</span>')
 
 def configured_datetime_formatter(value):

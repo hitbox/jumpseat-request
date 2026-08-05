@@ -1,4 +1,5 @@
 from .admin import admin_bp
+from .rank import rank_bp
 from .airline import airline_bp
 from .app_settings import app_settings_bp
 from .auth import auth_bp
@@ -19,4 +20,5 @@ def init_app(app):
     app.register_blueprint(jumpseat_request_bp)
     app.register_blueprint(lufthansa_bp)
     app.register_blueprint(notification_bp)
+    app.register_blueprint(rank_bp)
     app.register_blueprint(user_bp)

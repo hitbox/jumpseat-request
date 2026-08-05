@@ -203,7 +203,6 @@ class User(db.Model, UserMixin, ModelMixin):
 
     def confirm_email(self):
         self.email_verified_at = timezone.now()
-        self.is_active = True
 
     @property
     def best_show_name(self):

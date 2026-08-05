@@ -79,6 +79,9 @@ class ModelMixin:
 
     @classmethod
     def pagination_getter(cls):
+        """
+        Objects sorted by created datetime descendingly.
+        """
         query = (
             db.select(cls)
             .order_by(cls.created_at.desc())
