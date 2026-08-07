@@ -46,7 +46,7 @@ def profile():
             if exists:
                 raise ValidationError(f'Name "{field.data}" already exists')
 
-        edit_account_form.employee.name.validators.append(
+        edit_account_form.employee._fields['name'].validators.append(
             unique_employee_name,
         )
 
