@@ -2,16 +2,12 @@ import time
 
 import click
 
-from flask import render_template
 from flask import current_app
 
 from jumpseat_request import settings
-from jumpseat_request.extension import db
 from jumpseat_request.extension import smtp
 from jumpseat_request.model import EmailJob
-from jumpseat_request.model import EmailJobRecipient
 from jumpseat_request.model import JumpseatRequest
-from jumpseat_request.secret import six_digit_code
 
 @click.command("jobs")
 @click.option('--sleep-time', type=float, help='Sleep time between loops.')
@@ -31,6 +27,6 @@ def background_jobs(sleep_time):
 
 def init_app(app):
     """
-    Add service commands to flask.
+    Add service/task commands to flask.
     """
     app.cli.add_command(background_jobs)
