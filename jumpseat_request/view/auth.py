@@ -16,6 +16,8 @@ from jumpseat_request.form import ChangePassword
 from jumpseat_request.form import LoginForm
 from jumpseat_request.model import User
 
+from .user import get_user_or_abort
+
 auth_bp = Blueprint('auth', __name__, url_prefix='/login')
 
 @auth_bp.route('/user', methods=['GET', 'POST'])
@@ -24,12 +26,18 @@ def login():
     Login with app user account.
     """
     login_form = LoginForm(request.form)
-
     if request.method == 'GET':
         login_form.next_.data = request.args.get('next')
 
-    elif login_form.validate_on_submit():
-        user = User.by_email(login_form.email_address.data)
+    if login_form.validate_on_submit():
+        email_address = login_form.email_address.data
+        query = (
+            db.select(User)
+            .where(
+                User.email_address.ilike(email_address)
+            )
+        )
+        user = db.session.scalars(query).one_or_none()
         if user is not None:
             if user.check_password(login_form.password.data):
                 login_user(user, remember=True)
