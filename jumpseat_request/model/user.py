@@ -96,6 +96,7 @@ class User(db.Model, UserMixin, ModelMixin):
 
     employee = db.orm.relationship(
         'Employee',
+        cascade = 'all, delete-orphan',
         back_populates = 'user',
         uselist = False,
         info = {
@@ -148,6 +149,7 @@ class User(db.Model, UserMixin, ModelMixin):
 
     jumpseat_requests = db.orm.relationship(
         'JumpseatRequest',
+        cascade = 'all, delete-orphan',
         foreign_keys = 'JumpseatRequest.request_by_user_id',
         back_populates = 'request_by',
         info = {
