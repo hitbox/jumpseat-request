@@ -1,3 +1,4 @@
+from flask import abort
 from flask import Blueprint
 from flask import flash
 from flask import redirect
@@ -24,6 +25,8 @@ def edit_required_settings():
     Force user to input application settings until all are available.
     """
     form_class = ApplicationSetting.missing_settings_form()
+    if form_class is None:
+        abort(404)
     form = form_class()
     if form:
         flash(f'Application configuration neeeded.', 'danger')
