@@ -47,7 +47,7 @@ def get_base_settings_form():
 
 class ApplicationSetting(db.Model, ModelMixin):
     """
-    Key-value record for an application setting.
+    Key-value records for an application settings.
     """
 
     name = db.Column(
@@ -69,6 +69,9 @@ class ApplicationSetting(db.Model, ModelMixin):
 
     @classmethod
     def missing_settings(cls):
+        """
+        Return application settings from enum that are missing from the database.
+        """
         missing = []
         for member in ApplicationSettingEnum:
             value = cls.by_name(member.name)
