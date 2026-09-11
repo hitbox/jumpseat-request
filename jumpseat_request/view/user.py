@@ -125,7 +125,7 @@ def get_user_or_abort(email_address):
     query = (
         db.select(User)
         .where(
-            User.email_address == email_address
+            User.email_address.ilike(email_address)
         )
     )
     user = db.session.scalars(query).one_or_none()
@@ -206,7 +206,7 @@ def checkpass(email_address, password):
     query = (
         db.select(User)
         .where(
-            User.email_address == email_address
+            User.email_address.ilike(email_address)
         )
     )
     user = db.session.scalars(query).one_or_none()
