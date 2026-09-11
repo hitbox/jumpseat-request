@@ -107,6 +107,7 @@ class EditUserForm(FlaskForm):
     reset_password = reset_password_field()
 
     update = SubmitField()
+    delete = SubmitField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
