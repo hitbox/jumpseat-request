@@ -126,6 +126,7 @@ class EditObjectView(View):
         template,
         model_class,
         form_class,
+        delete_field_name = 'delete',
         kwargs_for_form = None,
         after_endpoint = None,
         more_context = None,
@@ -133,6 +134,7 @@ class EditObjectView(View):
         self.template = template
         self.model_class = model_class
         self.form_class = form_class
+        self.delete_field_name = delete_field_name
         self.kwargs_for_form = kwargs_for_form
         self.after_endpoint = after_endpoint
         self.more_context = more_context
@@ -161,7 +163,7 @@ class EditObjectView(View):
             form = form_class(formdata=request.form, obj=instance)
 
             if form.validate():
-                delete_field = getattr(form, 'delete', None)
+                delete_field = getattr(form, self.delete_field_name, None)
                 if delete_field and delete_field.data:
                     # User clicked delete.
                     db.session.delete(instance)
