@@ -13,6 +13,7 @@ from .lufthansa import Leg
 from .notification import JumpseatRequestNotificationRuleAssoc
 from .notification import NotificationRecipient
 from .notification import NotificationRule
+from .priority import JumpseatRequestPriority
 from .provider import Provider
 from .rank import Rank
 from .user import User
