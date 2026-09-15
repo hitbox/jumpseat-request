@@ -24,3 +24,16 @@ class EditApplicationSettingForm(FlaskForm):
 
         instance = db.session.get(ApplicationSetting, {'name': self.name.data})
         instance.value = self.value.data
+
+    def update_from_data(self, data):
+        from jumpseat_request.extension import db
+        from jumpseat_request.model import ApplicationSetting
+        from jumpseat_request.model import ApplicationSettingEnum
+
+        db.session.execute(
+            db.update(ApplicationSetting),
+            [
+                {'name': name, 'value': value}
+                for name, value in data.items()
+            ]
+        )

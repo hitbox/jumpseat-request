@@ -18,7 +18,7 @@ from jumpseat_request.model import Rank
 
 from htmlkit.lists import definition_list
 
-rank_bp = Blueprint('rank', __name__, url_prefix='/rank')
+rank_bp = Blueprint('rank', __name__)
 
 rank_bp.cli.help = 'Administrate rank objects'
 

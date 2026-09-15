@@ -28,6 +28,17 @@ class JumpseatRequest(db.Model, ModelMixin):
         primary_key = True,
         default = uuid.uuid4,
     )
+    
+    priority_id = db.Column(
+        db.UUID(as_uuid=True),
+        db.ForeignKey('jumpseat_request_priority.id'),
+        nullable = False,
+    )
+
+    priority = db.orm.relationship(
+        'JumpseatRequestPriority',
+        back_populates = 'requests'
+    )
 
     flight_datetime = db.Column(
         db.DateTime(timezone=True),

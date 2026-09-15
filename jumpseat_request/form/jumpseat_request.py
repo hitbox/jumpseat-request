@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 
 from flask_login import current_user
 from flask_wtf import FlaskForm
+from wtforms import BooleanField
 from wtforms import DateTimeField
 from wtforms import Form
 from wtforms import FormField
@@ -22,6 +23,7 @@ from wtforms.validators import ValidationError
 from wtforms_sqlalchemy.fields import QuerySelectField
 
 from jumpseat_request import settings
+from jumpseat_request.extension import db
 from jumpseat_request.extension import timezone
 from jumpseat_request.model import Airline
 from jumpseat_request.model import Employee
@@ -276,13 +278,13 @@ def timezone_choices(keys=None):
     return choices
 
 def today_noon():
-    # use extension for timezone
+    # use flask extension for timezone
     today = timezone.today()
     today_noon = datetime.combine(today, time(12,0), tzinfo=timezone.zoneinfo)
     return today_noon
 
 def tomorrow_midnight():
-    # use extension for timezone
+    # use flask extension for timezone
     tomorrow = timezone.now() + timedelta(days=1)
     tomorrow_midnight = tomorrow.replace(
         hour = 0,
@@ -292,28 +294,31 @@ def tomorrow_midnight():
     )
     return tomorrow_midnight
 
-class SelectFlightDatetimeForm(Form):
-
-    timezone = SelectField(
-        choices = timezone_choices(),
-        default = 'America/New_York',
-    )
+class SelectFlightDatetimeForm(FlaskForm):
+    """
+    Timezone aware date range selection form for exporting approved jumpseat requests.
+    """
 
     start = ISODateTimeField(
-        label = 'Flight datetime start',
+        label = 'Flight start',
         timespec = 'minutes',
         validators = [
             DataRequired()
         ],
+        render_kw = {
+            'data-tooltip': 'ISO 8601 datetime string.',
+        }
     )
 
     end = ISODateTimeField(
-        label = 'Flight datetime end',
+        label = 'Flight end',
         timespec = 'minutes',
         validators = [
             DataRequired()
         ],
     )
+
+    approved_only = BooleanField()
 
     select = SubmitField()
 
@@ -331,3 +336,18 @@ class SelectFlightDatetimeForm(Form):
 
         if self.end.data is None:
             self.end.data = tomorrow_midnight()
+
+    def jumpseat_request_query(self):
+        query = (
+            db.select(JumpseatRequest)
+            .where(
+                JumpseatRequest.flight_datetime >= self.start.data,
+                JumpseatRequest.flight_datetime < self.end.data,
+            )
+        )
+        if self.approved_only.data:
+            query = query.where(
+                JumpseatRequest.approved_at.is_not(None),
+            )
+        return query
+

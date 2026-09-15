@@ -18,7 +18,7 @@ from .application_setting_enum import ApplicationSettingEnum
 from .mixin import ModelMixin
 from .user import User
 
-def get_base_settings_form():
+def make_settings_form():
     class SettingsForm(FlaskForm):
         """
         Application settings initialization form
@@ -28,7 +28,7 @@ def get_base_settings_form():
         def populate_obj(self, application_setting):
             # ignore object and update database rows
             for member in ApplicationSettingEnum:
-                field = getattr(self, member.name.lower(), None)
+                field = getattr(self, member.name, None)
                 if field:
                     instance = db.session.get(ApplicationSetting, {'name': member.name})
                     if instance:
@@ -42,12 +42,36 @@ def get_base_settings_form():
                         )
                         db.session.add(instance)
 
+        def update_from_data(self, data):
+            """
+            Update from the view where all settings are presented as one form.
+            """
+            breakpoint()
+            db.session.execute(
+                db.update(ApplicationSetting),
+                [
+                    {'name': name, 'value': value}
+                    for name, value in data.items()
+                ]
+            )
+
     return SettingsForm
+
+def make_full_settings_form():
+    form_class = make_settings_form()
+
+    for member in ApplicationSettingEnum:
+        setattr(form_class, member.name.lower(), member.form_field)
+
+    return form_class
+
+def make_empty_settings_form():
+    return make_settings_form()
 
 
 class ApplicationSetting(db.Model, ModelMixin):
     """
-    Key-value records for an application settings.
+    Application settings as key-value records.
     """
 
     name = db.Column(
@@ -85,7 +109,7 @@ class ApplicationSetting(db.Model, ModelMixin):
 
     @classmethod
     def get_settings_form(cls):
-        SettingsForm = get_base_settings_form()
+        SettingsForm = make_empty_settings_form()
         # Add fields
         members = sorted(ApplicationSettingEnum, key=attrgetter('name'))
         for member in members:
@@ -104,7 +128,7 @@ class ApplicationSetting(db.Model, ModelMixin):
     def missing_settings_form(cls):
         missing = cls.missing_settings()
         if missing:
-            SettingsForm = get_base_settings_form()
+            SettingsForm = make_empty_settings_form()
 
             for name, field in missing:
                 setattr(SettingsForm, name.lower(), field)
@@ -114,3 +138,7 @@ class ApplicationSetting(db.Model, ModelMixin):
     @classmethod
     def name_for_template(cls):
         return 'Application Settings'
+
+    @classmethod
+    def full_settings_form(cls):
+        return make_full_settings_form()

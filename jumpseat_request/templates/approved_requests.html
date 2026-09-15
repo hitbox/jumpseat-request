@@ -6,15 +6,16 @@
 
 {% macro render_start_end(start, end) %}
     {% if start and end %}
-    <p>Between flight datetime <span class="nowrap">{{ start.strftime(config.JUMPSEAT_REQUEST_DATETIME_FORMAT) }}</span> and <span class="nowrap">{{ end.strftime(config.JUMPSEAT_REQUEST_DATETIME_FORMAT) }}</span></p>
+    <p>Flights between <span class="nowrap">{{ start.strftime(config.JUMPSEAT_REQUEST_DATETIME_FORMAT) }}</span> and <span class="nowrap">{{ end.strftime(config.JUMPSEAT_REQUEST_DATETIME_FORMAT) }}</span></p>
     {% endif %}
 {% endmacro %}
 
 
 {% block content %}
-    <form method="GET">
+    <form method="POST">
         {{ render_form(form) }}
     </form>
+    {#{% if query is defined %}<pre>{{ query }}</pre>{% endif %}#}
     <a role="button" class="secondary" href="{{ url_for(request.endpoint) }}">Clear form</a>
     {% if not approved_list %}
         <p>No approved request for date range</p>

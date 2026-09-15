@@ -64,7 +64,7 @@ from jumpseat_request.settings import scheduled_flight_carrier
 
 jumpseat_request_bp = Blueprint('jumpseat_request', __name__, url_prefix='/jumpseat')
 
-approved_jumpseat_requests_table = Table(
+jumpseat_request_table = Table(
     description = 'Approved jumpeat requests',
     columns = [
         Column(
@@ -108,6 +108,11 @@ approved_jumpseat_requests_table = Table(
             attrname = 'employee_phone',
         )
     ],
+)
+
+approved_at_column = Column(
+    header = 'Approved',
+    attrname = 'approved_at',
 )
 
 def action_forms_by_id(jumpseats):
@@ -286,7 +291,7 @@ def selected_date_calendar(date):
     Table listing scheduled flights for a date. Table row links to go to
     jumpseat request page with flight info filled in.
     """
-    datenav = [date + timedelta(days=days) for days in range(-3, 4)]
+    datenav = [date + timedelta(days=offset) for offset in range(-3, 4)]
     context = {
         'scheduled_flights': Leg.all_for_date(date),
         'month_name': calendar.month_name[date.month],
@@ -335,13 +340,13 @@ def landing_page():
 
     if disable_fields:
         del jumpseat_request_form.save_employee_info
-        flash('Employee info fields loaded from saved. Editing disabled.', 'info')
-        for key in disable_fields:
-            field = getattr(jumpseat_request_form, key)
-            if field:
-                if field.render_kw is None:
-                    field.render_kw = {}
-                field.render_kw.setdefault('disabled', True)
+        flash('Employee info fields loaded from saved.', 'info')
+        #for key in disable_fields:
+        #    field = getattr(jumpseat_request_form, key)
+        #    if field:
+        #        if field.render_kw is None:
+        #            field.render_kw = {}
+        #        field.render_kw.setdefault('disabled', True)
 
     # fill request form from query args if available
     args_schema = LegQueryArgsSchema()
@@ -433,14 +438,17 @@ def landing_page():
 
     return render_template('landing.html', **context)
 
-@jumpseat_request_bp.route('/approved')
+@jumpseat_request_bp.route('/approved', methods=['GET', 'POST'])
 @require_password_ok
 @login_required
 def approved_requests():
+    """
+    Export approved jumpseat requests between a date range.
+    """
     request_args = request.args.copy()
 
     # Default to yesterday noon to today midnight
-    form = SelectFlightDatetimeForm(request.args)
+    form = SelectFlightDatetimeForm()
 
     context = {
         'form': form,
@@ -449,19 +457,38 @@ def approved_requests():
         'end': None,
     }
 
-    if form.validate():
-        zoneinfo = ZoneInfo(form.timezone.data)
-        start = form.start.data.replace(tzinfo=zoneinfo)
-        end = form.end.data.replace(tzinfo=zoneinfo)
+    if form.validate_on_submit():
+        start = form.start.data
+        end = form.end.data
 
         context.update({
             'start': start,
             'end': end,
         })
 
-        approved_list = JumpseatRequest.all_approved_for_datetime_range(start, end)
+        query = form.jumpseat_request_query()
 
-        if form.export_excel.data:
+        if not form.approved_only.data:
+            # Add column to indicate approved status
+            for column in jumpseat_request_table.columns:
+                if column.attrname == 'approved_at':
+                    break
+            else:
+                jumpseat_request_table.columns = jumpseat_request_table.columns + [approved_at_column]
+
+        context.update({
+            'query': query,
+        })
+        approved_list = db.session.scalars(query).all()
+
+        if not approved_list:
+            # Disable export when no data returned
+            render_kw = getattr(form.export_excel, 'render_kw', None)
+            if not render_kw:
+                render_kw = setattr(form.export_excel, 'render_kw', {})
+            render_kw.setdefault('disabled', True)
+
+        if approved_list and form.export_excel.data:
             # User clicked export to Excel.
             # Sort circuit response to send file.
             dtfmt = settings.datetime_format()
@@ -472,7 +499,7 @@ def approved_requests():
                 'Export': ('hyperlink', request.url),
             }
             wb = create_excel(
-                approved_jumpseat_requests_table,
+                jumpseat_request_table,
                 approved_list,
                 metadata = metadata,
             )
@@ -497,7 +524,7 @@ def approved_requests():
             )
 
         context.update({
-            'table': approved_jumpseat_requests_table,
+            'table': jumpseat_request_table,
             'approved_list': approved_list,
         })
 

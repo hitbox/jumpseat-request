@@ -9,6 +9,7 @@ from flask import url_for
 from flask.views import View
 
 from jumpseat_request.extension import db
+from jumpseat_request.model import ApplicationSetting
 
 class SingleView(View):
     """
@@ -139,18 +140,23 @@ class EditObjectView(View):
         self.after_endpoint = after_endpoint
         self.more_context = more_context
 
-    def dispatch_request(self, **ident):
-        instance = db.session.get(self.model_class, ident)
-
-        if instance is None:
-            abort(404, description=f'Instance not found {ident=}')
-
+    def get_form_class(self):
         form_class = self.form_class
         if inspect.isclass(form_class):
             pass
         elif callable(form_class):
             # Not a class but is callable.
             form_class = form_class()
+
+        return form_class
+
+    def dispatch_request(self, **ident):
+        instance = db.session.get(self.model_class, ident)
+
+        if instance is None:
+            abort(404, description=f'Instance not found {ident=}')
+
+        form_class = self.get_form_class()
 
         if request.method == 'GET':
             if self.kwargs_for_form:
@@ -163,7 +169,11 @@ class EditObjectView(View):
             form = form_class(formdata=request.form, obj=instance)
 
             if form.validate():
-                delete_field = getattr(form, self.delete_field_name, None)
+                if self.delete_field_name is not None:
+                    delete_field = getattr(form, self.delete_field_name, None)
+                else:
+                    # Pluggable explicitly disallows deleting.
+                    delete_field = None
                 if delete_field and delete_field.data:
                     # User clicked delete.
                     db.session.delete(instance)
@@ -176,6 +186,54 @@ class EditObjectView(View):
                     next_url = url_for(self.after_endpoint)
                     return redirect(next_url)
 
+        context = {
+            'model_class': self.model_class,
+            'form_class': form_class,
+            'form': form,
+        }
+        if self.more_context:
+            for key, value in self.more_context.items():
+                context.setdefault(key, value)
+        return render_template(self.template, **context)
+
+
+class ModelEditView(EditObjectView):
+    """
+    Subclass of EditObjectView that edits an entire table through a form.
+    """
+
+    def dispatch_request(self):
+        """
+        This pluggable view isn't so generic. It is only intended for use with
+        the ApplicationSetting generated-from-enum form which does not take a
+        specific object to edit.
+        """
+
+        data = db.session.execute(db.select(self.model_class.name, self.model_class.value)).mappings()
+        data = [rowdict for rowdict in data]
+
+        form_class = self.get_form_class()
+
+        if request.method == 'GET':
+            if self.kwargs_for_form:
+                kwargs = self.kwargs_for_form()
+            else:
+                kwargs = {'data': data}
+            form = form_class(**kwargs)
+
+        elif request.method == 'POST':
+            form = form_class(formdata=request.form)
+
+            if form.validate():
+                form_data_dict = {
+                    field.name: field.data for field in form
+                    if hasattr(self.model_class, field.name)
+                }
+                form.update_from_data(form_data_dict)
+                db.session.commit()
+                if self.after_endpoint:
+                    next_url = url_for(self.after_endpoint)
+                    return redirect(next_url)
         context = {
             'model_class': self.model_class,
             'form_class': form_class,

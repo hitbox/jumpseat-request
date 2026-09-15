@@ -24,6 +24,34 @@ def delete_submit_field(**kwargs):
     render_kw.setdefault('class', 'contrast')
     return SubmitField(**kwargs)
 
+def fixup_isoformat_string(string):
+    """
+    Try to pad iso datetime string with zeros.
+    """
+    if 'T' in string:
+        date_string, time_string = string.split('T', 2)
+
+        date_parts = date_string.split('-')
+        date_parts = [part.zfill(2) for part in date_parts]
+
+        date_string = '-'.join(date_parts)
+
+        time_string, offset_string = time_string.split('-')
+
+        time_parts = time_string.split(':')
+        time_parts = [part.zfill(2) for part in time_parts]
+
+        time_string = ':'.join(time_parts)
+
+        offset_parts = offset_string.split(':')
+        offset_parts = [part.zfill(2) for part in offset_parts]
+
+        offset_string = ':'.join(offset_parts)
+
+        string = f'{date_string}T{time_string}-{offset_string}'
+
+    return string
+
 class TimezoneDateTimeField(DateTimeField):
 
     def __init__(self, *args, timezone=None, **kwargs):
@@ -38,6 +66,9 @@ class TimezoneDateTimeField(DateTimeField):
 
 
 class ISODateTimeField(StringField):
+    """
+    ISO 8601 format datetime form field.
+    """
 
     def __init__(self, *args, timespec=None, require_offset=False, **kwargs):
         self.timespec = timespec

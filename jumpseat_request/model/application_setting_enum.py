@@ -14,15 +14,18 @@ class ApplicationSettingEnum(Enum):
     DENY_COMMENT = 'deny_comment'
 
 
+# wtforms form field for the on-demand generated form classes.
+
 ApplicationSettingEnum.FROM_ADDRESS.form_field = StringField(
     'From Address',
     validators = [
         DataRequired()
     ],
     render_kw = {
-        'title':
+        'class': 'tooltip',
+        'data-tooltip':
             'The email address that appear as the'
-            ' from-address for emails.',
+            ' from-address for emails from this application.',
     }
 )
 

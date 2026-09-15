@@ -42,6 +42,7 @@ from jumpseat_request.model import Rank
 from jumpseat_request.model import User
 from jumpseat_request.seed import seed_database
 
+from .pluggable import ModelEditView
 from .pluggable import EditObjectView
 from .pluggable import ListView
 from .pluggable import NewObjectView
@@ -115,71 +116,51 @@ def inject():
             #},
             {
                 'endpoint': 'admin.user_list',
-                'current_for': set([
-                    'admin.user_list',
-                    'admin.user_edit',
-                    'admin.user_new',
-                ]),
+                'current_for': 'admin.user_(list|edit|new)',
                 'name': 'User',
                 'tooltip': User.__doc__,
             },
             {
                 'endpoint': 'admin.employee_list',
-                'current_for': set([
-                    'admin.employee_list',
-                    'admin.employee_edit',
-                    'admin.employee_new',
-                ]),
+                'current_for': 'admin.employee_(list|edit|new)',
                 'name': 'Employee',
                 'tooltip': Employee.__doc__,
             },
             {
                 'endpoint': 'admin.jumpseat_request_list',
-                'current_for': set([
-                    'admin.jumpseat_request_list',
-                    'admin.jumpseat_request_edit',
-                    'admin.jumpseat_request_new',
-                ]),
+                'current_for': 'admin.jumpseat_request_(list|edit|new)',
                 'name': 'Jumpseat Request',
                 'tooltip': JumpseatRequest.__doc__,
             },
             {
                 'endpoint': 'admin.notification_rule_list',
-                'current_for': set([
-                    'admin.notification_rule_list',
-                    'admin.notification_rule_edit',
-                    'admin.notification_rule_new',
-                ]),
+                'current_for': 'admin.notification_rule_(list|edit|new)',
                 'name': 'Notification Rule',
                 'tooltip': NotificationRule.__doc__,
             },
             {
                 'endpoint': 'admin.email_job_list',
-                'current_for': set([
-                    'admin.email_job_list',
-                    'admin.email_job_edit',
-                ]),
+                'current_for': 'admin.email_job_(list|edit)',
                 'name': 'Email',
                 'tooltip': EmailJob.__doc__,
             },
             {
                 'endpoint': 'admin.airline_list',
-                'current_for': set([
-                    'admin.airline_list',
-                    'admin.airline_edit',
-                ]),
+                'current_for': 'admin.airline_(list|edit)',
                 'name': 'Airline',
                 'tooltip': Airline.__doc__,
             },
             {
                 'endpoint': 'admin.rank_list',
-                'current_for': set([
-                    'admin.rank_list',
-                    'admin.rank_edit',
-                    'admin.rank_new',
-                ]),
+                'current_for': 'admin.rank_(list|edit|new)',
                 'name': 'Rank',
                 'tooltip': Rank.__doc__,
+            },
+            {
+                'endpoint': 'admin.appsettings_list_and_edit',
+                'current_for': 'admin.appsettings_list_and_edit',
+                'name': 'Application Settings',
+                'tooltip': 'Jumpseat Request application settings.'
             },
         ],
     }
@@ -700,6 +681,17 @@ admin_bp.add_url_rule(
         form_class = NewRankForm,
         after_endpoint = 'admin.rank_list',
     )
+)
+
+admin_bp.add_url_rule(
+    rule = '/appsettings',
+    view_func = ModelEditView.as_view(
+        name = 'appsettings_list_and_edit',
+        model_class = ApplicationSetting,
+        form_class = ApplicationSetting.full_settings_form,
+        delete_field_name = None,
+        template = 'admin/edit_form.html',
+    ),
 )
 
 # TODO
