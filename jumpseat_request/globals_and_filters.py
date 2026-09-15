@@ -1,3 +1,5 @@
+import re
+
 from datetime import datetime
 from datetime import timedelta
 
@@ -6,7 +8,6 @@ from flask import request
 from flask import url_for
 from flask_login import current_user
 from markupsafe import Markup
-from markupsafe import escape
 from wtforms import BooleanField
 from wtforms import FieldList
 from wtforms import FormField
@@ -14,17 +15,7 @@ from wtforms import FormField
 from .form.field import DynamicFieldList
 from .settings import date_format
 from .settings import datetime_format
-
-def render_attrs(**kwargs):
-    parts = []
-    for k, v in kwargs.items():
-        if v is True:
-            parts.append(k)  # boolean attr
-        elif v is False or v is None:
-            continue
-        else:
-            parts.append(f'{k}="{escape(v)}"')
-    return Markup(" ".join(parts))
+from htmlkit import render_attrs
 
 def format_datetime_as_configured(dt):
     if not dt:
@@ -68,7 +59,7 @@ def render_field(field):
     html = ['<div class="group">']
 
     if isinstance(field, BooleanField):
-        # Reverse order elements for bools
+        # Reverse order elements for booleans
         html.append(field())
         html.append(str(field.label))
     else:
@@ -92,33 +83,32 @@ def nav_links():
         links.append({
             'url' : url_for('jumpseat_request.landing_page'),
             'text': 'Request',
-            'current_for': set([
-                'jumpseat_request.landing_page'
-            ]),
+            'current_for_pattern': 'jumpseat_request.landing_page',
+            'data-tooltip': 'Submit a jumpseat request.',
+            'data-placement': 'bottom',
         })
         if current_user.is_decider:
             links.append({
                 'url' : url_for('jumpseat_request.list_jumpseat_requests'),
                 'text' : 'Decide',
-                'current_for' : set([
-                    'jumpseat_request.list_jumpseat_requests_list'
-                ]),
+                'current_for_pattern' : 'jumpseat_request.list_jumpseat_requests_list',
+                'data-tooltip': 'Approve or disapprove jumpseat requests.',
+                'data-placement': 'bottom',
             })
             links.append({
                 'url' : url_for('jumpseat_request.approved_requests'),
                 'text' : 'Export',
-                'current_for' : set([
-                    'jumpseat_request.approved_requests'
-                ]),
+                'data-tooltip': 'Export requested jumpseats for a date range.',
+                'data-placement': 'bottom',
+                'current_for_pattern' : 'jumpseat_request.approved_requests',
             })
         # Authenticated user profile page
         links.append({
             'url' : url_for('user.profile'),
             'text': 'Profile',
-            'current_for': set([
-                'user.profile' # FIXME: make any sense for logout?
-            ]),
-            'tooltip': 'Login/logout and edit account',
+            'current_for_pattern': 'user.profile', # FIXME: make any sense for logout?
+            'data-tooltip': 'Login/logout and edit account',
+            'data-placement': 'bottom',
         })
         if current_user.is_admin:
             # Admin page
@@ -126,38 +116,32 @@ def nav_links():
                 'url' : url_for('admin.root'),
                 'text': 'Admin',
                 'current_prefix': 'admin.',
+                'data-tooltip': 'Administration page for jumpseat request application.',
+                'data-placement': 'bottom',
             })
     else:
         links.append({
             'url': url_for('auth.login'),
             'text': 'Login',
-            'current_for': set([
-                'auth.login',
-            ]),
-            'tooltip': 'Login as existing user',
+            'current_for_pattern': 'auth.login',
+            'data-tooltip': 'Login as existing user',
+            'data-placement': 'bottom',
         })
         links.append({
             'url': url_for('user.create_account'),
             'text': 'Create account',
-            'current_for': set([
-                'user.create_account',
-            ]),
+            'current_for_pattern': 'user.create_account',
         })
 
     return links
 
-def render_link_with_current(url, text, current_for=None, current_prefix=None, tooltip=None):
-    if current_for is None:
-        current_for = set()
-    attributes = {}
-    if request.endpoint in current_for:
-        attributes['aria-current'] = 'page'
-
-    elif current_prefix is not None and request.endpoint.startswith(current_prefix):
-        attributes['aria-current'] = 'page'
-
-    if tooltip:
-        attributes['data-tooltip'] = tooltip
+def render_link_with_current(url, text, current_for_pattern=None, **attributes):
+    """
+    Template link renderer.
+    """
+    if current_for_pattern is not None:
+        if re.match(request.endpoint, current_for_pattern):
+            attributes.setdefault('aria-current', 'page')
 
     return Markup(f'<a {render_attrs(**attributes)} href="{url}">{ text }</a>')
 
